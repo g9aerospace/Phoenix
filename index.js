@@ -106,6 +106,9 @@ client.on('interactionCreate', (interaction) => {
   }
 });
 
+// Start the web server
+const webServer = require('./server');
+
 // Log process errors
 process.on('unhandledRejection', (error) => {
   logger.error(`Unhandled promise rejection: ${error}`);

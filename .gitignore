@@ -2,3 +2,4 @@
 bot.log
 node_modules
 logs
+sftp.json

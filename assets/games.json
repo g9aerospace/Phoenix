@@ -1,7 +1,3 @@
-
-[
-    "Game 1",
-    "Game 2",
-    "Game 3"
-  ]
-  
+{
+  "games": ["Game1", "Game2", "Game3", "Game4", "Game5"]
+}

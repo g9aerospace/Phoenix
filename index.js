@@ -5,6 +5,7 @@ const { config } = require('dotenv');
 const winston = require('winston');
 const axios = require('axios');
 const fs = require('fs');
+const path = require('path');
 
 config(); // Load environment variables from .env file
 
@@ -68,6 +69,38 @@ async function logToWebhook(message) {
   }
 }
 
+// Function to update user's JSON file with command usage information
+function updateUserCommandUsage(userId, commandName) {
+  const userFilePath = path.join('./users', `${userId}.json`);
+  const commandUsageData = {
+    command: commandName,
+    time: new Date().toISOString(),
+    response: 'Command executed successfully', // You can modify this based on your response logic
+  };
+
+  let userData = {};
+
+  try {
+    const userFileContent = fs.readFileSync(userFilePath, 'utf8');
+    userData = JSON.parse(userFileContent);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      // User file doesn't exist, create a new one
+      logger.info(`Creating new user file for user ID ${userId}`);
+    } else {
+      logger.warn(`Error reading user file (${userId}.json): ${error.message}`);
+    }
+  }
+
+  if (!userData.commandUsage) {
+    userData.commandUsage = [];
+  }
+
+  userData.commandUsage.push(commandUsageData);
+
+  fs.writeFileSync(userFilePath, JSON.stringify(userData, null, 2), 'utf8');
+}
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 const commands = new Map();
 
@@ -98,6 +131,9 @@ client.on('interactionCreate', (interaction) => {
 
     const endTime = Date.now();
     const timeTaken = endTime - startTime;
+
+    // Update user's JSON file with command usage information
+    updateUserCommandUsage(interaction.user.id, interaction.commandName);
 
     logger.info(`Command ${interaction.commandName} executed in ${timeTaken}ms`);
   } catch (error) {

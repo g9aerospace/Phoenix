@@ -1,165 +1,105 @@
 const { Client, GatewayIntentBits } = require('discord.js');
-const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v10');
-const { config } = require('dotenv');
-const winston = require('winston');
+const express = require('express');
+const { createLogger, transports, format } = require('winston');
 const axios = require('axios');
+const dotenv = require('dotenv');
 const fs = require('fs');
-const path = require('path');
 
-config(); // Load environment variables from .env file
+// Load environment variables from .env file
+dotenv.config();
 
-// Configure Winston logger
-const logger = winston.createLogger({
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.printf(info => `[${info.timestamp}] ${info.level}: ${info.message}`)
-  ),
+// Initialize Discord client
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+});
+
+client.commands = new Map();
+
+// Initialize Express server
+const app = express();
+const port = process.env.WEB_SERVER_PORT || 3000;
+
+// Create logs folder if not exists
+const logsFolder = 'logs';
+if (!fs.existsSync(logsFolder)) {
+  fs.mkdirSync(logsFolder);
+}
+
+// Create a logger with timestamped log files
+const logger = createLogger({
   transports: [
-    new winston.transports.Console({ format: winston.format.combine(winston.format.colorize(), winston.format.simple()) }),
-    new winston.transports.File({ filename: 'logs/bot.log' }),
+    new transports.Console(),
+    new transports.File({
+      filename: `${logsFolder}/${Date.now()}.log`,
+      format: format.combine(format.timestamp(), format.json()),
+    }),
   ],
 });
 
-// Function to register slash commands globally
-async function registerGlobalSlashCommands() {
-  const commandsData = [];
-  const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-
-  for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    commandsData.push(command.data);
-    commands.set(command.data.name, command);
-
-    // Log each loaded command in green
-    logger.info('\x1b[32m%s\x1b[0m', `Loaded command: ${command.data.name}`);
-  }
-
-  const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
-
+// Function to log to Discord webhook
+const logToWebhook = async (message) => {
   try {
-    logger.info('Started refreshing global (/) commands.');
-
-    await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
-      { body: commandsData },
-    );
-
-    logger.info('Successfully reloaded global (/) commands.');
+    await axios.post(process.env.WEBHOOK_URL, { content: message });
   } catch (error) {
-    logger.error(`Error refreshing global (/) commands: ${error.message}`);
-    logToWebhook(`Error refreshing global (/) commands: ${error.message}`);
+    console.error('Error sending message to webhook:', error.message);
   }
-}
+};
 
-// Function to post logs to Discord webhook
-async function logToWebhook(message) {
-  const webhookURL = process.env.WEBHOOK_URL;
-
-  if (webhookURL) {
-    try {
-      // Post logs to the webhook
-      await axios.post(webhookURL, { content: `\`\`\`asciidoc\n${message}\n\`\`\`` });
-      logger.info('Logs successfully posted to the webhook.');
-    } catch (error) {
-      logger.error('Error posting logs to webhook:', error.message);
-    }
-  } else {
-    logger.warn('WEBHOOK_URL is not defined in the .env file. Logs will not be posted to a webhook.');
-  }
-}
-
-// Function to update user's JSON file with command usage information
-function updateUserCommandUsage(userId, commandName) {
-  const userFilePath = path.join('./users', `${userId}.json`);
-  const commandUsageData = {
-    command: commandName,
-    time: new Date().toISOString(),
-    response: 'Command executed successfully', // You can modify this based on your response logic
-  };
-
-  let userData = {};
-
-  try {
-    const userFileContent = fs.readFileSync(userFilePath, 'utf8');
-    userData = JSON.parse(userFileContent);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      // User file doesn't exist, create a new one
-      logger.info(`Creating new user file for user ID ${userId}`);
-    } else {
-      logger.warn(`Error reading user file (${userId}.json): ${error.message}`);
-    }
-  }
-
-  if (!userData.commandUsage) {
-    userData.commandUsage = [];
-  }
-
-  userData.commandUsage.push(commandUsageData);
-
-  fs.writeFileSync(userFilePath, JSON.stringify(userData, null, 2), 'utf8');
-}
-
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
-const commands = new Map();
-
-client.once('ready', async () => {
-  logToWebhook('Bot is starting...');
-  logger.info('\x1b[33m%s\x1b[0m', `Logged in as ${client.user.tag}`);
-
-  // Register global slash commands on startup
-  await registerGlobalSlashCommands();
+// Event: Bot ready
+client.once('ready', () => {
+  console.log(`Logged in as ${client.user.tag}`);
+  logger.info(`Logged in as ${client.user.tag}`);
+  logToWebhook(`Bot is now online: ${client.user.tag}`);
 });
 
+// Event: Message interaction
 client.on('messageCreate', (message) => {
-  logger.info('\x1b[36m%s\x1b[0m', `Received message: ${message.content} from ${message.author.tag}`);
-  // Your message handling logic here
+  // Exclude messages sent by the bot
+  if (message.author.bot) return;
+
+  // Log interactions
+  console.log(`User: ${message.author.tag} | Message: ${message.content}`);
+  logger.info(`User: ${message.author.tag} | Message: ${message.content}`);
+  logToWebhook(`User: ${message.author.tag} | Message: ${message.content}`);
+
+  // Your command handling logic here (if needed for non-slash commands)
 });
 
-client.on('interactionCreate', (interaction) => {
-  const startTime = Date.now();
-  logger.info('\x1b[35m%s\x1b[0m', `Received interaction: ${interaction.type} from ${interaction.user.tag}`);
+// Load slash commands
+const commandsFolder = './commands';
+fs.readdirSync(commandsFolder).forEach((file) => {
+  if (file.endsWith('.js')) {
+    const command = require(`${commandsFolder}/${file}`);
+    client.commands.set(command.data.name, command);
+  }
+});
 
+// Event: Bot interaction (slash commands)
+client.on('interactionCreate', async (interaction) => {
   if (!interaction.isCommand()) return;
 
-  const command = commands.get(interaction.commandName);
+  const command = client.commands.get(interaction.commandName);
+
   if (!command) return;
 
   try {
-    command.execute(interaction);
-
-    const endTime = Date.now();
-    const timeTaken = endTime - startTime;
-
-    // Update user's JSON file with command usage information
-    updateUserCommandUsage(interaction.user.id, interaction.commandName);
-
-    logger.info(`Command ${interaction.commandName} executed in ${timeTaken}ms`);
+    await command.execute(interaction);
+    console.log(`Command executed: ${command.data.name}`);
+    logger.info(`Command executed: ${command.data.name}`);
+    logToWebhook(`Command executed: ${command.data.name}`);
   } catch (error) {
-    logger.error(`Error executing command: ${error.message}`);
-    interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+    console.error(`Error executing command: ${command.data.name}`, error);
+    logger.error(`Error executing command: ${command.data.name} - ${error.message}`);
+    logToWebhook(`Error executing command: ${command.data.name} - ${error.message}`);
   }
 });
 
-// Start the web server
-const webServer = require('./server');
-
-// Log process errors
-process.on('unhandledRejection', (error) => {
-  logger.error(`Unhandled promise rejection: ${error}`);
-  logToWebhook(`Unhandled promise rejection: ${error}`);
+// Start Express server
+app.listen(port, () => {
+  console.log(`Web server running at http://localhost:${port}`);
+  logger.info(`Web server running at http://localhost:${port}`);
+  logToWebhook(`Web server running at http://localhost:${port}`);
 });
 
-process.on('uncaughtException', (error) => {
-  logger.error(`Uncaught exception: ${error}`);
-  logToWebhook(`Uncaught exception: ${error}`);
-});
-
-// Log metrics to webhook every minute
-setInterval(() => {
-  const logs = fs.readFileSync('logs/bot.log', 'utf8');
-  logToWebhook(logs);
-}, 60000);
-
+// Log in to Discord
 client.login(process.env.TOKEN);

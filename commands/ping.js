@@ -1,36 +1,14 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-const axios = require('axios');
-require('dotenv').config();
-
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('ping')
-    .setDescription('Replies with Pong!'),
+  data: {
+    name: 'ping',
+    description: 'Ping command to check bot latency.',
+  },
   async execute(interaction) {
-    try {
-      // Start measuring the time
-      const start = Date.now();
+    const ping = Date.now() - interaction.createdTimestamp;
 
-      // Send initial response
-      await interaction.reply({ content: 'Pinging...', ephemeral: true });
-
-      // End measuring the time
-      const end = Date.now();
-      const latency = end - start;
-
-      // Edit the initial response with detailed message
-      await interaction.editReply(`Pong! Latency is ${latency}ms.`);
-
-      // Log details to Discord webhook
-      const webhookURL = process.env.WEBHOOK_URL;
-      if (webhookURL) {
-        await axios.post(webhookURL, {
-          content: `Command /ping invoked by ${interaction.user.tag}. Latency: ${latency}ms.`,
-        });
-      }
-    } catch (error) {
-      console.error('Error:', error.message);
-      // You can handle the error as needed
-    }
+    await interaction.reply({
+      content: `🏓 Pong! Latency is ${ping}ms.`,
+      ephemeral: true, // Set to true if you want the response to be visible only to the user who triggered the command
+    });
   },
 };

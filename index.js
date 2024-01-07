@@ -1,4 +1,5 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits} = require('discord.js');
+const { MessageEmbed } = require('discord.js');
 const express = require('express');
 const { createLogger, transports, format } = require('winston');
 const axios = require('axios');

@@ -1,105 +1,82 @@
-const { Client, GatewayIntentBits} = require('discord.js');
-const { MessageEmbed } = require('discord.js');
-const express = require('express');
-const { createLogger, transports, format } = require('winston');
-const axios = require('axios');
-const dotenv = require('dotenv');
+const { Client, GatewayIntentBits } = require('discord.js');
+const { config } = require('dotenv');
 const fs = require('fs');
+const winston = require('winston');
+const axios = require('axios');
 
 // Load environment variables from .env file
-dotenv.config();
+config();
 
-// Initialize Discord client
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
-});
-
-client.commands = new Map();
-
-// Initialize Express server
-const app = express();
-const port = process.env.WEB_SERVER_PORT || 3000;
-
-// Create logs folder if not exists
-const logsFolder = 'logs';
-if (!fs.existsSync(logsFolder)) {
-  fs.mkdirSync(logsFolder);
-}
-
-// Create a logger with timestamped log files
-const logger = createLogger({
-  transports: [
-    new transports.Console(),
-    new transports.File({
-      filename: `${logsFolder}/${Date.now()}.log`,
-      format: format.combine(format.timestamp(), format.json()),
-    }),
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
   ],
 });
 
-// Function to log to Discord webhook
+// Set up logging
+const logFolder = 'logs';
+if (!fs.existsSync(logFolder)) {
+  fs.mkdirSync(logFolder);
+}
+
+const logger = winston.createLogger({
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: `${logFolder}/bot.log` }),
+  ],
+});
+
+// Function to log to webhook
 const logToWebhook = async (message) => {
   try {
     await axios.post(process.env.WEBHOOK_URL, { content: message });
   } catch (error) {
-    console.error('Error sending message to webhook:', error.message);
+    console.error('Error logging to webhook:', error.message);
   }
 };
 
-// Event: Bot ready
+// Function to create a timestamped log file
+const createLogFile = () => {
+  const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\./g, '-');
+  const fileName = `${logFolder}/${timestamp}.log`;
+
+  fs.writeFileSync(fileName, ''); // Create an empty file
+
+  return fileName;
+};
+
+// Function to log command details
+const logCommandDetails = (commandName, startTime) => {
+  const endTime = new Date();
+  const elapsedTime = endTime - startTime;
+
+  logger.info(`Command '${commandName}' executed in ${elapsedTime}ms`);
+
+  const logMessage = `Command '${commandName}' executed in ${elapsedTime}ms`;
+  logToWebhook(logMessage);
+};
+
+// Event handler for when the bot is ready
 client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}`);
   logger.info(`Logged in as ${client.user.tag}`);
-  logToWebhook(`Bot is now online: ${client.user.tag}`);
 });
 
-// Event: Message interaction
-client.on('messageCreate', (message) => {
-  // Exclude messages sent by the bot
-  if (message.author.bot) return;
-
-  // Log interactions
-  console.log(`User: ${message.author.tag} | Message: ${message.content}`);
-  logger.info(`User: ${message.author.tag} | Message: ${message.content}`);
-  logToWebhook(`User: ${message.author.tag} | Message: ${message.content}`);
-
-  // Your command handling logic here (if needed for non-slash commands)
-});
-
-// Load slash commands
-const commandsFolder = './commands';
-fs.readdirSync(commandsFolder).forEach((file) => {
-  if (file.endsWith('.js')) {
-    const command = require(`${commandsFolder}/${file}`);
-    client.commands.set(command.data.name, command);
-  }
-});
-
-// Event: Bot interaction (slash commands)
+// Event handler for when a slash command is executed
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isCommand()) return;
 
-  const command = client.commands.get(interaction.commandName);
-
-  if (!command) return;
+  const startTime = new Date();
 
   try {
+    const command = require(`./commands/${interaction.commandName}.js`);
     await command.execute(interaction);
-    console.log(`Command executed: ${command.data.name}`);
-    logger.info(`Command executed: ${command.data.name}`);
-    logToWebhook(`Command executed: ${command.data.name}`);
+    logCommandDetails(interaction.commandName, startTime);
   } catch (error) {
-    console.error(`Error executing command: ${command.data.name}`, error);
-    logger.error(`Error executing command: ${command.data.name} - ${error.message}`);
-    logToWebhook(`Error executing command: ${command.data.name} - ${error.message}`);
+    console.error(error);
+    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
   }
-});
-
-// Start Express server
-app.listen(port, () => {
-  console.log(`Web server running at http://localhost:${port}`);
-  logger.info(`Web server running at http://localhost:${port}`);
-  logToWebhook(`Web server running at http://localhost:${port}`);
 });
 
 // Log in to Discord

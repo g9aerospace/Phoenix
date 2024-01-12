@@ -1,11 +1,13 @@
-// commands/hello.js
-
 module.exports = {
-  data: {
-    name: 'hello',
-    description: 'Say hello to the bot',
-  },
-  async execute(interaction) {
-    await interaction.reply('Hello!');
-  },
-};
+    setup: (client) => {
+      // Setup logic, if needed
+    },
+    data: {
+      name: 'hello',
+      description: 'Receive a friendly greeting.',
+    },
+    execute: async (interaction) => {
+      await interaction.reply('Hello!');
+    },
+  };
+  

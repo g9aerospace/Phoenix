@@ -4,5 +4,17 @@
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1",
     "winston": "^3.11.0"
+  },
+  "name": "phoenix",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "start": "node --inspect=9229 index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
+  ,
+  "author": "g9aerospace",
+  "license": "ISC",
+  "description": ""
 }

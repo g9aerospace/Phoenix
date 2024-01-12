@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const { log } = require('../index');
+const axios = require('axios'); // Import Axios library
+require('dotenv').config();
 
 module.exports = {
   setup: (client) => {
@@ -30,7 +32,10 @@ module.exports = {
 
       // Log to file
       logToFile(`Command "/ping" used by ${userTag}. Bot Uptime: ${uptime}. Bot Ping: ${ping}`);
-      
+
+      // Log to webhook
+      logToWebhook(`Command "/ping" used by ${userTag}. Bot Uptime: ${uptime}. Bot Ping: ${ping}`);
+
       // Reply with bot uptime and ping as an embed
       const embed = {
         title: 'Bot Uptime and Ping',
@@ -50,6 +55,9 @@ module.exports = {
 
       // Log to file
       logToFile(errorMessage);
+
+      // Log error to webhook
+      logToWebhook(errorMessage);
 
       await interaction.reply('An error occurred while processing the command.');
     }
@@ -77,4 +85,21 @@ function logToFile(message) {
   const logFilePath = path.join(logsFolder, newestLogFile);
 
   fs.appendFileSync(logFilePath, `${message}\n`);
+}
+
+// Function to log messages to the specified webhook using Axios
+function logToWebhook(message) {
+  const webhookURL = process.env.PING_WEBHOOK_URL;
+
+  if (webhookURL) {
+    axios.post(webhookURL, { content: message })
+      .then(response => {
+        console.log(`Logged to webhook successfully: ${message}`);
+      })
+      .catch(error => {
+        console.error(`Error logging to webhook: ${error}`);
+      });
+  } else {
+    console.warn('Webhook URL not provided in the environment variables.');
+  }
 }

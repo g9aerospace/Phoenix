@@ -1,5 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
+require('dotenv').config(); // Load environment variables from .env
 const { log } = require('../index');
 
 module.exports = {
@@ -58,6 +60,9 @@ module.exports = {
         // Log to file
         logToFile(`Command "/help" used by ${userTag}. Response: ${message}`);
 
+        // Log to webhook
+        await logToWebhook(`Command "/help" used by ${userTag}. Response: ${message}`);
+
         await interaction.reply(helpEmbed);
       }
     } catch (error) {
@@ -68,6 +73,9 @@ module.exports = {
 
       // Log to file
       logToFile(errorMessage);
+
+      // Log error to webhook
+      await logToWebhook(errorMessage);
 
       await interaction.reply('An error occurred while processing the command.');
     }
@@ -85,4 +93,20 @@ function logToFile(message) {
   const logFilePath = path.join(logsFolder, newestLogFile);
 
   fs.appendFileSync(logFilePath, `${message}\n`);
+}
+
+// Function to log messages to the specified webhook
+async function logToWebhook(message) {
+  const webhookUrl = process.env.HELP_WEBHOOK_URL;
+
+  if (webhookUrl) {
+    try {
+      await axios.post(webhookUrl, { content: message });
+      console.log('Logged to webhook successfully.');
+    } catch (webhookError) {
+      console.error(`Error logging to webhook: ${webhookError.message}`);
+    }
+  } else {
+    console.warn('Webhook URL not provided. Skipping logging to webhook.');
+  }
 }

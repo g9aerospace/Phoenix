@@ -3,11 +3,15 @@ const path = require('path');
 const { Client, GatewayIntentBits, REST } = require('discord.js');
 const { Routes } = require('discord-api-types/v10');
 const { format } = require('date-fns');
+const axios = require('axios');
 require('dotenv').config();
 
 const logsFolder = './logs';
 const commandsFolder = './commands';
 let currentLogFile;
+
+// Webhook URL from .env
+const webhookURL = process.env.WEBHOOK_URL;
 
 // Function to create a new log file with timestamp as the name
 function createLogFile() {
@@ -16,11 +20,22 @@ function createLogFile() {
   fs.writeFileSync(currentLogFile, `Log started at: ${timestamp}\n\n`);
 }
 
-// Function to log messages to the console and current log file
-function log(message) {
+// Function to log messages to the console, current log file, and webhook
+async function log(message) {
   const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
-  console.log(`[${timestamp}] ${message}`);
-  fs.appendFileSync(currentLogFile, `[${timestamp}] ${message}\n`);
+  const formattedMessage = `[${timestamp}] ${message}`;
+
+  console.log(formattedMessage);
+  fs.appendFileSync(currentLogFile, `${formattedMessage}\n`);
+
+  // Log to webhook if webhookURL is defined
+  if (webhookURL) {
+    try {
+      await axios.post(webhookURL, { content: formattedMessage });
+    } catch (error) {
+      console.error(`Error sending message to webhook: ${error.message}`);
+    }
+  }
 }
 
 // Initialize logs folder if not exists

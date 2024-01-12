@@ -5,23 +5,43 @@ const { log } = require('../index');
 module.exports = {
   setup: (client) => {
     // Setup logic, if needed
+    // Ensure the client object is accessible within the command
+    module.exports.client = client;
   },
   data: {
     name: 'ping',
-    description: 'Get a pong response.',
+    description: 'Get the bot\'s uptime and ping.',
   },
   execute: async (interaction) => {
     try {
-      const message = 'Pong!';
       const userTag = interaction.user.tag;
 
+      // Ensure the client object is accessible within the execute function
+      const client = module.exports.client;
+
+      // Calculate bot uptime
+      const uptime = calculateUptime(client.uptime);
+
+      // Get bot ping
+      const ping = client.ws.ping !== -1 ? `${client.ws.ping}ms` : 'Calculating...';
+
       // Log to console
-      console.log(`Command "/ping" used by ${userTag}. Response: ${message}`);
+      console.log(`Command "/ping" used by ${userTag}. Bot Uptime: ${uptime}. Bot Ping: ${ping}`);
 
       // Log to file
-      logToFile(`Command "/ping" used by ${userTag}. Response: ${message}`);
+      logToFile(`Command "/ping" used by ${userTag}. Bot Uptime: ${uptime}. Bot Ping: ${ping}`);
       
-      await interaction.reply(message);
+      // Reply with bot uptime and ping as an embed
+      const embed = {
+        title: 'Bot Uptime and Ping',
+        fields: [
+          { name: 'Uptime', value: uptime },
+          { name: 'Ping', value: ping },
+        ],
+        color: 0x0099ff,
+      };
+
+      await interaction.reply({ embeds: [embed] });
     } catch (error) {
       const errorMessage = `Error executing "/ping" command: ${error}`;
 
@@ -35,6 +55,16 @@ module.exports = {
     }
   },
 };
+
+// Function to calculate bot uptime
+function calculateUptime(uptime) {
+  const seconds = Math.floor((uptime / 1000) % 60);
+  const minutes = Math.floor((uptime / (1000 * 60)) % 60);
+  const hours = Math.floor((uptime / (1000 * 60 * 60)) % 24);
+  const days = Math.floor(uptime / (1000 * 60 * 60 * 24));
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+}
 
 // Function to append messages to the newest file in the "logs" folder
 function logToFile(message) {

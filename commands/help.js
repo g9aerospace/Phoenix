@@ -19,16 +19,35 @@ module.exports = {
       console.log(`Command "/help" used by ${userTag}. Response: ${message}`);
 
       if (!interaction.replied) {
+        // Get the command files in the "commands" folder
+        const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+        // Array to store command data for the embed
+        const commandFields = [];
+
+        // Read data from each command file
+        for (const file of commandFiles) {
+          try {
+            const command = require(`./${file}`);
+
+            // Check if the command has the required "data" property
+            if (command.data && command.data.name && command.data.description) {
+              commandFields.push({
+                name: `/${command.data.name}`,
+                value: command.data.description,
+              });
+            }
+          } catch (error) {
+            console.error(`Error reading data from ${file}: ${error}`);
+          }
+        }
+
         const helpEmbed = {
           embeds: [
             {
               title: 'Command List',
               description: 'List of available commands:',
-              fields: [
-                { name: '/ping', value: 'Get a pong response.' },
-                { name: '/hello', value: 'Receive a friendly greeting.' },
-                { name: '/help', value: 'Display this help message.' },
-              ],
+              fields: commandFields,
             },
           ],
         };
@@ -38,7 +57,7 @@ module.exports = {
 
         // Log to file
         logToFile(`Command "/help" used by ${userTag}. Response: ${message}`);
-        
+
         await interaction.reply(helpEmbed);
       }
     } catch (error) {

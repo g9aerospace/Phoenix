@@ -38,7 +38,7 @@ module.exports = {
 
         // Log to file
         logToFile(`Command "/help" used by ${userTag}. Response: ${message}`);
-
+        
         await interaction.reply(helpEmbed);
       }
     } catch (error) {
@@ -55,12 +55,15 @@ module.exports = {
   },
 };
 
-// Function to log messages to the newest file in the "logs" folder
+// Function to append messages to the newest file in the "logs" folder
 function logToFile(message) {
   const logsFolder = './logs';
-  const timestamp = new Date().toISOString().replace(/:/g, '-');
-  const logFilePath = path.join(logsFolder, `${timestamp}.log`);
 
-  // Log to file
+  const logFiles = fs.readdirSync(logsFolder).filter(file => file.endsWith('.log'));
+  logFiles.sort((a, b) => fs.statSync(path.join(logsFolder, b)).mtime.getTime() - fs.statSync(path.join(logsFolder, a)).mtime.getTime());
+
+  const newestLogFile = logFiles.length > 0 ? logFiles[0] : new Date().toISOString().replace(/:/g, '-') + '.log';
+  const logFilePath = path.join(logsFolder, newestLogFile);
+
   fs.appendFileSync(logFilePath, `${message}\n`);
 }

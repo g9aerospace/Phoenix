@@ -2,4 +2,4 @@
 bot.log
 node_modules
 logs
-sftp.json
+.vscode/sftp.json

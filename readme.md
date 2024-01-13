@@ -1,4 +1,4 @@
-# Phoenix Bot
+# Phoenix Bot v{{version}}
 
 Welcome to Phoenix, a powerful Discord bot designed to enhance your server experience.
 

@@ -1,24 +1,25 @@
 const fs = require('fs');
 const path = require('path');
-const axios = require('axios');
-require('dotenv').config(); // Load environment variables from .env
 const { log } = require('../index');
+const axios = require('axios');
+require('dotenv').config();
 
 module.exports = {
-  setup: (client) => {
+  setup: (client, sharedLog) => {
     // Setup logic, if needed
+    // You can use the sharedLog function here if necessary
   },
   data: {
     name: 'help',
     description: 'Display this help message.',
   },
-  execute: async (interaction) => {
+  execute: async (interaction, sharedLog) => {
     try {
       const message = 'Help message sent.';
       const userTag = interaction.user.tag;
 
-      // Log to console
-      console.log(`Command "/help" used by ${userTag}. Response: ${message}`);
+      // Log using the shared log function
+      sharedLog(`Command "/help" used by ${userTag}. Response: ${message}`);
 
       if (!interaction.replied) {
         // Get the command files in the "commands" folder
@@ -54,59 +55,40 @@ module.exports = {
           ],
         };
 
-        // Log to console
-        console.log(`Sending help message to ${userTag}`);
-
-        // Log to file
-        logToFile(`Command "/help" used by ${userTag}. Response: ${message}`);
+        // Log using the shared log function
+        sharedLog(`Sending help message to ${userTag}`);
 
         // Log to webhook
-        await logToWebhook(`Command "/help" used by ${userTag}. Response: ${message}`);
+        await sharedLogToWebhook(`Command "/help" used by ${userTag}. Response: ${message}`);
 
         await interaction.reply(helpEmbed);
       }
     } catch (error) {
       const errorMessage = `Error executing "/help" command: ${error}`;
 
-      // Log to console
-      console.error(errorMessage);
-
-      // Log to file
-      logToFile(errorMessage);
+      // Log using the shared log function
+      sharedLog(errorMessage);
 
       // Log error to webhook
-      await logToWebhook(errorMessage);
+      await sharedLogToWebhook(errorMessage);
 
       await interaction.reply('An error occurred while processing the command.');
     }
   },
 };
 
-// Function to append messages to the newest file in the "logs" folder
-function logToFile(message) {
-  const logsFolder = './logs';
+// Function to log messages to the specified webhook using Axios
+async function sharedLogToWebhook(message) {
+  const webhookURL = process.env.WEBHOOK_URL;
 
-  const logFiles = fs.readdirSync(logsFolder).filter(file => file.endsWith('.log'));
-  logFiles.sort((a, b) => fs.statSync(path.join(logsFolder, b)).mtime.getTime() - fs.statSync(path.join(logsFolder, a)).mtime.getTime());
-
-  const newestLogFile = logFiles.length > 0 ? logFiles[0] : new Date().toISOString().replace(/:/g, '-') + '.log';
-  const logFilePath = path.join(logsFolder, newestLogFile);
-
-  fs.appendFileSync(logFilePath, `${message}\n`);
-}
-
-// Function to log messages to the specified webhook
-async function logToWebhook(message) {
-  const webhookUrl = process.env.HELP_WEBHOOK_URL;
-
-  if (webhookUrl) {
+  if (webhookURL) {
     try {
-      await axios.post(webhookUrl, { content: message });
+      await axios.post(webhookURL, { content: message });
       console.log('Logged to webhook successfully.');
     } catch (webhookError) {
       console.error(`Error logging to webhook: ${webhookError.message}`);
     }
   } else {
-    console.warn('Webhook URL not provided. Skipping logging to webhook.');
+    console.warn('Webhook URL not provided in the environment variables.');
   }
 }

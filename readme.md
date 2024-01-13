@@ -39,9 +39,6 @@ CLIENT_ID=
 CLIENT_SECRET=
 TOKEN=
 WEBHOOK_URL=
-PING_WEBHOOK_URL=
-HELP_WEBHOOK_URL=
-HELLO_WEBHOOK_URL=
 ```
 To start the bot, run the following command:
 ```npm start```

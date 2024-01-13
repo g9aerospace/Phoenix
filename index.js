@@ -7,8 +7,9 @@ const axios = require('axios');
 require('dotenv').config();
 
 const logsFolder = './logs';
-const commandsFolder = './commands';
 let currentLogFile;
+const logQueue = [];
+let isProcessingLogQueue = false;
 
 // Webhook URL from .env
 const webhookURL = process.env.WEBHOOK_URL;
@@ -20,7 +21,7 @@ function createLogFile() {
   fs.writeFileSync(currentLogFile, `Log started at: ${timestamp}\n\n`);
 }
 
-// Function to log messages to the console, current log file, and webhook
+// Function to log messages to the console, current log file, and webhook queue
 async function log(message) {
   const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
   const formattedMessage = `[${timestamp}] ${message}`;
@@ -28,14 +29,34 @@ async function log(message) {
   console.log(formattedMessage);
   fs.appendFileSync(currentLogFile, `${formattedMessage}\n`);
 
-  // Log to webhook if webhookURL is defined
-  if (webhookURL) {
+  // Log to webhook queue
+  logQueue.push(formattedMessage);
+
+  // Process the log queue if not already processing
+  if (!isProcessingLogQueue) {
+    processLogQueue();
+  }
+}
+
+// Function to process the log queue and send logs to the webhook
+async function processLogQueue() {
+  isProcessingLogQueue = true;
+
+  // Wait for a brief period to collect more logs
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  if (logQueue.length > 0) {
+    const logs = logQueue.join('\n');
+    logQueue.length = 0; // Clear the queue
     try {
-      await axios.post(webhookURL, { content: formattedMessage });
-    } catch (error) {
-      console.error(`Error sending message to webhook: ${error.message}`);
+      await axios.post(webhookURL, { content: logs });
+      console.log('Logged to webhook successfully.');
+    } catch (webhookError) {
+      console.error(`Error logging to webhook: ${webhookError.message}`);
     }
   }
+
+  isProcessingLogQueue = false;
 }
 
 // Initialize logs folder if not exists
@@ -78,11 +99,11 @@ client.on('interactionCreate', async (interaction) => {
   try {
     // Handle each command separately
     if (commandName === 'ping') {
-      await require('./commands/ping').execute(interaction);
+      await require('./commands/ping').execute(interaction, log);
     } else if (commandName === 'hello') {
-      await require('./commands/hello').execute(interaction);
+      await require('./commands/hello').execute(interaction, log);
     } else if (commandName === 'help') {
-      await require('./commands/help').execute(interaction);
+      await require('./commands/help').execute(interaction, log);
     }
     // Add more conditions for other commands as needed
   } catch (error) {
@@ -96,6 +117,7 @@ client.login(process.env.TOKEN);
 async function loadCommands() {
   try {
     // Check if the commands folder exists
+    const commandsFolder = './commands';
     if (!fs.existsSync(commandsFolder)) {
       throw new Error('Commands folder not found.');
     }
@@ -107,7 +129,7 @@ async function loadCommands() {
       try {
         const command = require(`./commands/${file}`);
         if (typeof command.setup === 'function') {
-          command.setup(client);
+          command.setup(client, log);
           log(`Command ${file} loaded successfully.`);
         } else {
           log(`Invalid command structure in ${file}.`);

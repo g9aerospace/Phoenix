@@ -6,8 +6,6 @@ require('dotenv').config();
 
 module.exports = {
   setup: (client, sharedLog) => {
-    // Setup logic, if needed
-    // You can use the sharedLog function here if necessary
   },
   data: {
     name: 'help',

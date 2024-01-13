@@ -1,13 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 const { log } = require('../index');
-const axios = require('axios'); // Import Axios library
+const axios = require('axios');
 require('dotenv').config();
 
 module.exports = {
   setup: (client, sharedLog) => {
-    // Setup logic, if needed
-    // Ensure the client object is accessible within the command
     module.exports.client = client;
     module.exports.sharedLog = sharedLog;
   },

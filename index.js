@@ -155,7 +155,7 @@ async function refreshSlashCommands() {
     // Fetch application (bot) information
     const application = await client.application?.fetch();
     
-    // Update global slash commands (null is used for global commands)
+    // Update global slash commands
     await rest.put(
       Routes.applicationCommands(application.id),
       { body: commands },

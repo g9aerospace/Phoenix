@@ -5,8 +5,6 @@ require('dotenv').config();
 
 module.exports = {
   setup: (client, log) => {
-    // Setup logic, if needed
-    // You can use the log function here if necessary
   },
   data: {
     name: 'hello',

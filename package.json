@@ -8,14 +8,15 @@
     "fns": "^1.0.0",
     "winston": "^3.11.0"
   },
-  "name": "phoenix",
+  "name": "Phoenix",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node --inspect=9229 index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "g9aerospace",
+  "author": "G9 Aerospace",
   "license": "ISC",
-  "description": ""
+  "description": "An awesome discord bot",
+  "repository": "https://github.com/g9militantsYT/Phoenix"
 }

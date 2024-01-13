@@ -59,7 +59,7 @@ async function processLogQueue() {
   isProcessingLogQueue = false;
 }
 
-// Initialize logs folder if not exists
+// Initialize logs folder if it does not exists
 if (!fs.existsSync(logsFolder)) {
   fs.mkdirSync(logsFolder);
 }
@@ -104,8 +104,10 @@ client.on('interactionCreate', async (interaction) => {
       await require('./commands/hello').execute(interaction, log);
     } else if (commandName === 'help') {
       await require('./commands/help').execute(interaction, log);
+    } else if (commandName === 'info') {
+      await require('./commands/info').execute(interaction, log);
     }
-    // Add more conditions for other commands as needed
+
   } catch (error) {
     log(`Error handling command "${commandName}": ${error}`);
     await interaction.reply('An error occurred while processing the command.');

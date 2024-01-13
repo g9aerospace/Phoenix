@@ -10,7 +10,7 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.SITE_PORT || 3000;
-const IP = process.env.SITE_IP || 'localhost';
+const IP = process.env.SITE_IP || '0.0.0.0';
 const siteWebhookURL = process.env.SITE_WEBHOOK_URL;
 
 const logsFolder = './logs';

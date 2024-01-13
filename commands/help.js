@@ -6,6 +6,7 @@ require('dotenv').config();
 
 module.exports = {
   setup: (client, sharedLog) => {
+    // Additional setup logic, if needed
   },
   data: {
     name: 'help',
@@ -40,6 +41,8 @@ module.exports = {
             }
           } catch (error) {
             console.error(`Error reading data from ${file}: ${error}`);
+            // Log error details to the newest log file
+            logToFile(`Error reading data from ${file}: ${error}`);
           }
         }
 
@@ -55,9 +58,13 @@ module.exports = {
 
         // Log using the shared log function
         sharedLog(`Sending help message to ${userTag}`);
+        // Log details to the newest log file
+        logToFile(`Command "/help" used by ${userTag}. Response: ${message}`);
 
         // Log to webhook
         await sharedLogToWebhook(`Command "/help" used by ${userTag}. Response: ${message}`);
+        // Log webhook success to the newest log file
+        logToFile('Logged to webhook successfully.');
 
         await interaction.reply(helpEmbed);
       }
@@ -66,6 +73,9 @@ module.exports = {
 
       // Log using the shared log function
       sharedLog(errorMessage);
+
+      // Log error to the newest log file
+      logToFile(errorMessage);
 
       // Log error to webhook
       await sharedLogToWebhook(errorMessage);
@@ -82,11 +92,28 @@ async function sharedLogToWebhook(message) {
   if (webhookURL) {
     try {
       await axios.post(webhookURL, { content: message });
-      console.log('Logged to webhook successfully.');
     } catch (webhookError) {
       console.error(`Error logging to webhook: ${webhookError.message}`);
+      // Log webhook error details to the newest log file
+      logToFile(`Error logging to webhook: ${webhookError.message}`);
     }
   } else {
     console.warn('Webhook URL not provided in the environment variables.');
+    // Log warning details to the newest log file
+    logToFile('Webhook URL not provided in the environment variables.');
   }
+}
+
+// Function to append messages to the newest file in the "logs" folder
+function logToFile(message) {
+  const logsFolder = './logs';
+
+  const logFiles = fs.readdirSync(logsFolder).filter(file => file.endsWith('.log'));
+  logFiles.sort((a, b) => fs.statSync(path.join(logsFolder, b)).mtime.getTime() - fs.statSync(path.join(logsFolder, a)).mtime.getTime());
+
+  const newestLogFile = logFiles.length > 0 ? logFiles[0] : new Date().toISOString().replace(/:/g, '-') + '.log';
+  const logFilePath = path.join(logsFolder, newestLogFile);
+
+  fs.appendFileSync(logFilePath, `${message}\n`);
+  console.log(message); // Log to console
 }

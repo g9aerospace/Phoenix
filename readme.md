@@ -8,7 +8,6 @@ Welcome to Phoenix, a powerful Discord bot designed to enhance your server exper
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Configuration](#configuration)
-- [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -32,7 +31,7 @@ Install dependencies:
 ```
 npm install
 ```
-Configuration
+### Configuration
 Create a .env file in the root directory.
 Add the following contents to the .env file:
 ```
@@ -47,8 +46,8 @@ HELLO_WEBHOOK_URL=
 To start the bot, run the following command:
 ```npm start```
 
-Contributing
+## Contributing
 If you would like to contribute to Phoenix, please check the contribution guidelines.
 
-License
+## License
 This project is licensed under the MIT License.

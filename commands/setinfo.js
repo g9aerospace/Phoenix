@@ -117,7 +117,7 @@ module.exports = {
           shortMessageCollector.stop();
 
           // Ask the user to visit a website and generate a list of roles
-          interaction.followUp(`Now, ${user.tag}, please visit [this website](https://phoenix.g9aerospace.in/) and generate a list of roles you can apply for. Reply with the list within the next 10 minutes.`);
+          interaction.followUp(`Now, ${user.tag}, please visit [this website](https://phoenix.g9aerospace.in/selector) and generate a list of roles you can apply for. Reply with the list within the next 10 minutes.`);
 
           // Collect the user's response for role list
           const roleListFilter = (response) => response.author.id === user.id;

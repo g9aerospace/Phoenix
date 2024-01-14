@@ -6,22 +6,15 @@ const { Client, GatewayIntentBits, REST } = require('discord.js');
 const { Routes } = require('discord-api-types/v10');
 const { format } = require('date-fns');
 const axios = require('axios');
-const { spawn } = require('child_process'); // Added for running child processes
 require('dotenv').config();
 
 const logsFolder = './logs';
 let currentLogFile;
 const botLogQueue = [];
-const siteLogQueue = [];
 let isProcessingBotLogQueue = false;
-let isProcessingSiteLogQueue = false;
 
-// Webhook URLs from .env
+// Webhook URL from .env
 const webhookURL = process.env.WEBHOOK_URL;
-const sharedSiteWebhookURL = process.env.SITE_WEBHOOK_URL;
-
-// Shared site webhook URL and queue
-const siteWebhookQueue = [];
 
 // Function to create a new log file with timestamp as the name
 function createLogFile() {
@@ -31,7 +24,7 @@ function createLogFile() {
 }
 
 // Function to log messages to the console, current log file, and bot webhook queue
-async function log(message, isSiteRelated = false) {
+async function log(message) {
   const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
   const formattedMessage = `[${timestamp}] ${message}`;
 
@@ -39,18 +32,10 @@ async function log(message, isSiteRelated = false) {
   fs.appendFileSync(currentLogFile, `${formattedMessage}\n`);
 
   // Log to bot webhook queue
-  if (!isSiteRelated && webhookURL) {
+  if (webhookURL) {
     botLogQueue.push(formattedMessage);
     if (!isProcessingBotLogQueue) {
       processBotLogQueue();
-    }
-  }
-
-  // Log to site webhook queue
-  if (isSiteRelated && sharedSiteWebhookURL) {
-    siteWebhookQueue.push(formattedMessage);
-    if (!isProcessingSiteLogQueue) {
-      processSiteLogQueue();
     }
   }
 }
@@ -76,27 +61,6 @@ async function processBotLogQueue() {
   isProcessingBotLogQueue = false;
 }
 
-// Function to process the site-related log queue and send logs to the webhook
-async function processSiteLogQueue() {
-  isProcessingSiteLogQueue = true;
-
-  // Wait for a brief period to collect more logs
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  if (siteWebhookQueue.length > 0) {
-    const logs = siteWebhookQueue.join('\n');
-    siteWebhookQueue.length = 0; // Clear the queue
-    try {
-      await axios.post(sharedSiteWebhookURL, { content: logs });
-      console.log('Logged to site webhook successfully.');
-    } catch (webhookError) {
-      handleWebhookError(webhookError, siteWebhookQueue, processSiteLogQueue);
-    }
-  }
-
-  isProcessingSiteLogQueue = false;
-}
-
 // Handle webhook error and retry mechanism
 function handleWebhookError(webhookError, logQueue, processLogQueue) {
   if (webhookError.response && webhookError.response.status === 429) {
@@ -118,10 +82,9 @@ if (!fs.existsSync(logsFolder)) {
 // Initialize a new log file on startup
 createLogFile();
 
-// Export shared site webhook URL and queue
+// Export webhook URL for other modules if needed
 module.exports = {
-  sharedSiteWebhookURL,
-  siteWebhookQueue,
+  webhookURL,
 };
 
 const client = new Client({
@@ -143,9 +106,6 @@ client.once('ready', async () => {
 
     // Refresh slash commands across all guilds
     await refreshSlashCommands();
-
-    // Run serve.js as a child process
-    startSiteServer();
   } catch (error) {
     log(`Error during startup: ${error}`);
   }
@@ -227,21 +187,4 @@ async function refreshSlashCommands() {
   } catch (error) {
     log(`Error refreshing global (/) commands: ${error}`);
   }
-}
-
-// Function to run serve.js as a child process
-function startSiteServer() {
-  const siteServerProcess = spawn('node', ['site/serve.js']);
-
-  siteServerProcess.stdout.on('data', (data) => {
-    console.log(`Site Server stdout: ${data}`);
-  });
-
-  siteServerProcess.stderr.on('data', (data) => {
-    console.error(`Site Server stderr: ${data}`);
-  });
-
-  siteServerProcess.on('close', (code) => {
-    console.log(`Site Server process exited with code ${code}`);
-  });
 }

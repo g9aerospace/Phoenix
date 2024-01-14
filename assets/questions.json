@@ -1,54 +1,79 @@
 {
-    "games": [
-      {
-        "name": "Minecraft",
+  "games": [
+    {
+      "name": "Minecraft",
+      "questions": [
+        "Plugin Developer",
+        "Mod Developer",
+        "Map Builder",
+        "Hosting Service"
+      ]
+    },
+    {
+      "name": "CS2",
+      "questions": [
+        "Developer",
+        "Map Builder"
+      ]
+    },
+    {
+      "name": "Discord Bot",
+      "questions": [
+        "Developer",
+        "Documentation",
+        "Support Representative",
+        "Asset Artist"
+      ]
+    },
+    {
+      "name": "Discord Guild Staff",
+      "questions": [
+        "Asset Artist",
+        "Support Representative",
+        "Moderator"
+      ]
+    },
+    {
+      "name": "Video Creator",
+      "questions": [
+        "Cinematic Editing",
+        "Advertisment",
+        "Modern Editing"
+      ]
+    },
+    {
+      "name": "Digital Artist",
+      "questions": [
+        "Image Manipulation",
+        "Artist",
+        "UI Designer"
+      ]
+    },
+    {
+        "name": "Game Designer",
         "questions": [
-          "Plugin Developer",
-          "Mod Developer",
-          "Map Builder",
-          "Hosting Service"
+            "Gameplay Designer",
+            "Level Designer",
+            "Narrative Designer",
+            "Systems Designer",
+            "Balancing Specialist",
+            "User Experience (UX) Designer",
+            "Prototyper",
+            "Monetization Designer"
         ]
-      },
-      {
-        "name": "CS2",
+    },
+    {
+        "name": "Website",
         "questions": [
-          "Developer",
-          "Map Builder"
+            "Web Developer",
+            "Front-end Developer",
+            "Back-end Developer",
+            "UI/UX Designer",
+            "Content Writer",
+            "SEO Specialist",
+            "Graphic Designer",
+            "Web Administrator"
         ]
-      },
-      {
-        "name": "Discord Bot",
-        "questions": [
-          "Developer",
-          "Documentation",
-          "Support Representative",
-          "Asset Artist"
-        ]
-      },
-      {
-        "name": "Discord Guild Staff",
-        "questions": [
-          "Asset Artist",
-          "Support Representative",
-          "Moderator"
-        ]
-      },
-      {
-        "name": "Video Creator",
-        "questions": [
-          "Cinematic Editing",
-          "Advertisment",
-          "Modern Editing"
-        ]
-      },
-      {
-        "name": "Digital Artist",
-        "questions": [
-          "Image Manipulation",
-          "Artist",
-          "UI Designer"
-        ]
-      }
-    ]
-  }
-  
+    }
+]
+}

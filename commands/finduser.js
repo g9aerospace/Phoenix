@@ -28,6 +28,11 @@ module.exports = {
     try {
       const userTag = interaction.user.tag;
 
+      // Ignore messages from the bot itself
+      if (interaction.user.bot) {
+        return;
+      }
+
       // Log using the shared log function
       sharedLog(`Command "/finduser" used by ${userTag}.`);
 

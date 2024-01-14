@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const { log } = require('../index');
 const axios = require('axios');
+const { log } = require('../index');
 require('dotenv').config();
 
 // Function to save user data to a JSON file
@@ -78,6 +78,9 @@ module.exports = {
   execute: async (interaction, sharedLog) => {
     try {
       const userTag = interaction.user.tag;
+
+      // Ignore interactions from the bot itself
+      if (interaction.user.bot) return;
 
       // Log using the shared log function
       sharedLog(`Command "/setinfo" used by ${userTag}.`);

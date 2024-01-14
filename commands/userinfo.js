@@ -18,6 +18,7 @@ module.exports = {
       },
     ],
   },
+
   execute: async (interaction, sharedLog) => {
     try {
       const targetUser = interaction.options.getMember('target');

@@ -64,6 +64,9 @@ function logToFile(message) {
   console.log(message); // Log to console
 }
 
+// Import the predefined questions data
+const gameData = require('../assets/questions.json');
+
 module.exports = {
   setup: (client, sharedLog) => {
     // Any setup logic can go here if needed
@@ -128,14 +131,38 @@ module.exports = {
             // Log the user's provided role list
             sharedLog(`${user.tag} provided role list: ${roleList}`);
 
-            // Save role list data to the user's JSON file
-            saveUserData(user.id, { roleList });
+            // Check each line for validity
+            const lines = roleList.split('\n');
 
-            // Respond to the user acknowledging their input
-            interaction.followUp(`Thank you, ${user.tag}! Your role list has been noted.`);
+            // Check if the user's response matches with the predefined roles/questions
+            const isValidResponse = (game, role) => {
+              const foundGame = gameData.games.find((g) => g.name.toLowerCase() === game.toLowerCase());
+              return foundGame && foundGame.questions.includes(role);
+            };
 
-            // Stop the collector after collecting the response
-            roleListCollector.stop();
+            // Function to format the user's response as required
+            const formatUserResponse = (game, role) => `${game}: ${role}`;
+
+            // Check each line for validity
+            const isValidLines = lines.every((line) => {
+              const [game, role] = line.split(':').map((item) => item.trim());
+              return isValidResponse(game, role);
+            });
+
+            // If all lines are valid, save the user data; otherwise, ask for a non-modified text
+            if (isValidLines) {
+              // Save role list data to the user's JSON file
+              saveUserData(user.id, { roleList });
+
+              // Respond to the user acknowledging their input
+              interaction.followUp(`Thank you, ${user.tag}! Your role list has been noted.`);
+            } else {
+              // Respond to the user and ask for a non-modified text
+              interaction.followUp(`Sorry ${user.tag}, please provide only a non-modified text message. Ensure that the generated text matches the predefined roles/questions.`);
+              
+              // Stop the collector after providing the response
+              roleListCollector.stop();
+            }
           });
 
           roleListCollector.on('end', (collected, reason) => {

@@ -1,0 +1,54 @@
+{
+    "games": [
+      {
+        "name": "Minecraft",
+        "questions": [
+          "Plugin Developer",
+          "Mod Developer",
+          "Map Builder",
+          "Hosting Service"
+        ]
+      },
+      {
+        "name": "CS2",
+        "questions": [
+          "Developer",
+          "Map Builder"
+        ]
+      },
+      {
+        "name": "Discord Bot",
+        "questions": [
+          "Developer",
+          "Documentation",
+          "Support Representative",
+          "Asset Artist"
+        ]
+      },
+      {
+        "name": "Discord Guild Staff",
+        "questions": [
+          "Asset Artist",
+          "Support Representative",
+          "Moderator"
+        ]
+      },
+      {
+        "name": "Video Creator",
+        "questions": [
+          "Cinematic Editing",
+          "Advertisment",
+          "Modern Editing"
+        ]
+      },
+      {
+        "name": "Digital Artist",
+        "questions": [
+          "Image Manipulation",
+          "Artist",
+          "UI Designer"
+        ]
+      }
+    ]
+  }
+  

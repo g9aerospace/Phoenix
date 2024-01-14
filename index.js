@@ -128,7 +128,10 @@ client.on('interactionCreate', async (interaction) => {
       await require('./commands/info').execute(interaction, log);
     } else if (commandName === 'setinfo') {
       await require('./commands/setinfo').execute(interaction, log);
+    } else if (commandName === 'finduser') {
+      await require('./commands/finduser').execute(interaction, log);
     }
+
 
   } catch (error) {
     log(`Error handling command "${commandName}": ${error}`);

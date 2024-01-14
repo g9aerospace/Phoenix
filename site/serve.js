@@ -51,7 +51,10 @@ async function log(message) {
 // Serve static files from the 'public' folder
 app.use(express.static('site/public'));
 
+// Serve static files from the 'assets' folder
+app.use('/assets', express.static('site/assets'));
+
 // Start the server
 app.listen(PORT, IP, () => {
-  log(`Server is running at http://${IP}:${PORT}`);
+  log(`Server is running at https://${IP}:${PORT}`);
 });

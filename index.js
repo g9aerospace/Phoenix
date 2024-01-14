@@ -130,6 +130,8 @@ client.on('interactionCreate', async (interaction) => {
       await require('./commands/setinfo').execute(interaction, log);
     } else if (commandName === 'finduser') {
       await require('./commands/finduser').execute(interaction, log);
+    } else if (commandName === 'userinfo') {
+      await require('./commands/userinfo').execute(interaction, log);
     }
 
 

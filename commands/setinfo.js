@@ -35,12 +35,12 @@ module.exports = {
           // Log the user's provided ID
           sharedLog(`${user.tag} provided Discord user ID: ${userId}`);
 
-          // You can perform additional actions with the user's ID here
-          // For example, save it to a database, use it in another API call, etc.
+          // Save user data to a JSON file
+          saveUserData(userId, { userId, username: user.tag });
 
           // Respond to the user acknowledging their input
           interaction.followUp(`Thank you, ${user.tag}! Your Discord user ID (${userId}) has been noted.`);
-          
+
           // Stop the collector after collecting the response
           collector.stop();
         });
@@ -67,6 +67,23 @@ module.exports = {
     }
   },
 };
+
+// Function to save user data to a JSON file
+function saveUserData(userId, userData) {
+  const usersFolder = './users';
+  const userFilePath = path.join(usersFolder, `${userId}.json`);
+
+  // Ensure the "users" folder exists
+  if (!fs.existsSync(usersFolder)) {
+    fs.mkdirSync(usersFolder);
+  }
+
+  // Write user data to the JSON file
+  fs.writeFileSync(userFilePath, JSON.stringify(userData, null, 2));
+
+  // Log to console
+  console.log(`User data saved to: ${userFilePath}`);
+}
 
 // Function to log messages to the specified webhook using Axios
 async function sharedLogToWebhook(message) {

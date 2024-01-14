@@ -126,6 +126,8 @@ client.on('interactionCreate', async (interaction) => {
       await require('./commands/help').execute(interaction, log);
     } else if (commandName === 'info') {
       await require('./commands/info').execute(interaction, log);
+    } else if (commandName === 'setinfo') {
+      await require('./commands/setinfo').execute(interaction, log);
     }
 
   } catch (error) {

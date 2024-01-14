@@ -1,47 +1,38 @@
-<!-- site/public/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <!-- Corrected SVG Favicon Link -->
+  <link rel="icon" type="image/svg+xml" href="../assets/Phoenix.svg">
   <title>Phoenix</title>
 </head>
 
 <body>
 
-  <!-- Include the header-->
-  <div id="header-container"></div>
-  <script>
-    fetch('../assets/header.html')
-      .then(response => response.text())
-      .then(html => document.getElementById('header-container').innerHTML = html);
-  </script>
-
-  <!-- Announcement Bar -->
-  <div id="announcement-bar"></div>
-  <script>
-    fetch('../assets/notice.json')
-      .then(response => response.json())
-      .then(data => {
-        const announcementBar = document.getElementById('announcement-bar');
-        announcementBar.innerHTML = `<div class="announcement">${data.message}</div>`;
-      })
-      .catch(error => console.error('Error fetching notice.json:', error));
-  </script>
+  <!-- Header -->
+  <header>
+    <h1>Phoenix</h1>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Dashboard</a>
+      <a href="#">Support</a>
+    </nav>
 
   <!-- Main Content -->
   <main>
     <p>Site content goes here!</p>
   </main>
 
-  <!-- Include the footer -->
-  <div id="footer-container"></div>
+  <!-- Footer -->
+  <footer>
+    <p>Phoenix | <span id="footer-year"></span></p>
+  </footer>
   <script>
-    fetch('../assets/footer.html')
-      .then(response => response.text())
-      .then(html => document.getElementById('footer-container').innerHTML = html);
+    // Set the current year in the footer
+    document.getElementById('footer-year').textContent = new Date().getFullYear();
   </script>
 
   <!-- Include the main script -->

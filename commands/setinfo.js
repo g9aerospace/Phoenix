@@ -69,7 +69,6 @@ const gameData = require('../assets/questions.json');
 
 module.exports = {
   setup: (client, sharedLog) => {
-    // Any setup logic can go here if needed
   },
   data: {
     name: 'setinfo',

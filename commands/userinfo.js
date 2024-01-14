@@ -4,7 +4,6 @@ const { log } = require('../index');
 
 module.exports = {
   setup: (client, sharedLog) => {
-    // Any setup logic can go here if needed
   },
   data: {
     name: 'userinfo',
@@ -39,14 +38,14 @@ module.exports = {
       // Create an embed with user information
       const embed = {
         title: `User Information for ${targetUser.user.tag}`,
-        description: `${targetUser} (${targetUser.user.tag})`, // Mention the user in the description
+        description: `${targetUser} (${targetUser.user.tag})`,
         fields: [
           { name: 'User ID', value: userData.userId },
           { name: 'Username', value: userData.username },
           { name: 'Short Message', value: userData.shortMessage || 'Not provided' },
           { name: 'Role List', value: userData.roleList || 'Not provided' },
         ],
-        color: 0x00ff00, // You can customize the color as needed
+        color: 0x00ff00, 
         footer: {
           text: `Requested by ${interaction.user.tag}`,
           icon_url: interaction.user.displayAvatarURL({ format: 'png', dynamic: true, size: 4096 }),

@@ -1,4 +1,4 @@
-const { name, version, description, author, repository } = require('../package.json');
+const { name, version, description, author, repository, website } = require('../package.json');
 
 module.exports = {
   setup: (client, sharedLog) => {
@@ -23,7 +23,8 @@ module.exports = {
         Version: version,
         Description: description,
         Author: author,
-        Repository: repository
+        Repository: repository,
+        Website: website
       };
 
       // Log using the shared log function

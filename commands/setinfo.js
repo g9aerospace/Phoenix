@@ -6,11 +6,10 @@ require('dotenv').config();
 
 module.exports = {
   setup: (client, sharedLog) => {
-    // Additional setup logic, if needed
   },
   data: {
     name: 'setinfo',
-    description: 'Ask the user for their Discord user ID.',
+    description: 'Ask the user for a short message about themselves (not more than 300 words).',
   },
   execute: async (interaction, sharedLog) => {
     try {
@@ -22,24 +21,33 @@ module.exports = {
       if (!interaction.replied) {
         const user = interaction.user;
 
-        // Ask the user for their Discord user ID
-        await interaction.reply(`Hello ${user.tag}! Please provide your Discord user ID.`);
+        // Check if the user provided a file attachment
+        if (interaction.attachments && interaction.attachments.size > 0) {
+          interaction.followUp(`Sorry ${user.tag}, please provide your information as text instead of a file attachment. Stay within the character limit (not more than 300 words).`);
+          return;
+        }
+
+        // Ask the user for a short message including everything about them
+        await interaction.reply(`Hello ${user.tag}! Please provide a short message about yourself (not more than 300 words).`);
 
         // Collect the user's response
         const filter = (response) => response.author.id === user.id;
         const collector = interaction.channel.createMessageCollector({ filter, time: 30000 }); // Adjust the time as needed (in milliseconds)
 
-        collector.on('collect', (response) => {
-          const userId = response.content;
+        let shortMessage = '';
 
-          // Log the user's provided ID
-          sharedLog(`${user.tag} provided Discord user ID: ${userId}`);
+        collector.on('collect', (response) => {
+          // Limit the short message to 300 words
+          shortMessage = response.content.trim().slice(0, 300);
+
+          // Log the user's provided information
+          sharedLog(`${user.tag} provided short message: ${shortMessage}`);
 
           // Save user data to a JSON file
-          saveUserData(userId, { userId, username: user.tag });
+          saveUserData(user.id, { userId: user.id, username: user.tag, shortMessage });
 
           // Respond to the user acknowledging their input
-          interaction.followUp(`Thank you, ${user.tag}! Your Discord user ID (${userId}) has been noted.`);
+          interaction.followUp(`Thank you, ${user.tag}! Your information has been noted.`);
 
           // Stop the collector after collecting the response
           collector.stop();
@@ -47,7 +55,7 @@ module.exports = {
 
         collector.on('end', (collected, reason) => {
           if (reason === 'time') {
-            interaction.followUp(`Time is up! Please run the command again to provide your Discord user ID.`);
+            interaction.followUp(`Time is up! Please run the command again to provide your information.`);
           }
         });
       }

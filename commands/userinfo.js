@@ -39,18 +39,28 @@ module.exports = {
       // Create an embed with user information
       const embed = {
         title: `User Information for ${targetUser.user.tag}`,
+        description: `${targetUser} (${targetUser.user.tag})`, // Mention the user in the description
         fields: [
+          { name: 'User ID', value: userData.userId },
+          { name: 'Username', value: userData.username },
           { name: 'Short Message', value: userData.shortMessage || 'Not provided' },
           { name: 'Role List', value: userData.roleList || 'Not provided' },
         ],
         color: 0x00ff00, // You can customize the color as needed
+        footer: {
+          text: `Requested by ${interaction.user.tag}`,
+          icon_url: interaction.user.displayAvatarURL({ format: 'png', dynamic: true, size: 4096 }),
+        },
+        thumbnail: {
+          url: targetUser.user.displayAvatarURL({ format: 'png', dynamic: true, size: 4096 }),
+        },
       };
   
       // Respond with the embed
       await interaction.reply({ embeds: [embed] });
   
-      // Log using the shared log function
-      sharedLog(`User information retrieved for ${targetUser.user.tag}.`);
+      // Log using the shared log function, mentioning the looked-up user
+      sharedLog(`User information retrieved for ${targetUser.user.tag} by ${interaction.user.tag}.`);
     } catch (error) {
       const errorMessage = `Error executing "/userinfo" command: ${error}`;
   
@@ -67,4 +77,5 @@ module.exports = {
     }
   },
   
+   
 };

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { MessageActionRow, MessageSelectMenu } = require('discord.js');
 const { log } = require('../index');
 require('dotenv').config();
 
@@ -41,28 +42,62 @@ module.exports = {
         const gameData = require('../assets/questions.json');
         const games = gameData.games.map(game => game.name);
 
-        // Ask the user to specify a game
-        const gameFilter = (response) => response.author.id === interaction.user.id && games.includes(response.content);
-        await interaction.reply(`Please specify the game you are interested in from the following list: ${games.join(', ')}`);
-        const gameResponse = await interaction.channel.awaitMessages({ filter: gameFilter, max: 1, time: 60000 }); // 1 minute
+        // Define the options for the first dropdown (games)
+        const gameOptions = games.map(game => ({ label: game, value: game }));
 
-        if (gameResponse.size === 0) {
-          return interaction.followUp('No valid response received within the time limit. The command has been canceled.');
-        }
+        // Ask the user to specify a game using the first dropdown
+        await interaction.reply({
+          content: 'Please specify the game you are interested in:',
+          components: [
+            {
+              type: 1, // Action row
+              components: [
+                {
+                  type: 3, // Select menu
+                  custom_id: 'gameDropdown',
+                  placeholder: 'Select a game',
+                  options: gameOptions,
+                },
+              ],
+            },
+          ],
+        });
 
-        const selectedGame = gameResponse.first().content;
+        // Collect the user's selection for the first dropdown
+        const gameSelection = await getDropdownSelection(interaction, 'gameDropdown', games);
+        if (!gameSelection) return; // Exit if no valid selection
+
+        const selectedGame = gameSelection;
+
+        // Get questions for the selected game
         const selectedGameQuestions = gameData.games.find(game => game.name === selectedGame)?.questions;
 
-        // Ask the user to specify a role for the selected game
-        const roleFilter = (response) => response.author.id === interaction.user.id && selectedGameQuestions.includes(response.content);
-        await interaction.followUp(`Great! Now, please specify the role you are interested in for the game "${selectedGame}" from the following list: ${selectedGameQuestions.join(', ')}`);
-        const roleResponse = await interaction.channel.awaitMessages({ filter: roleFilter, max: 1, time: 60000 }); // 1 minute
+        // Define the options for the second dropdown (roles)
+        const roleOptions = selectedGameQuestions.map(question => ({ label: question, value: question }));
 
-        if (roleResponse.size === 0) {
-          return interaction.followUp('No valid response received within the time limit. The command has been canceled.');
-        }
+        // Ask the user to specify a role for the selected game using the second dropdown
+        await interaction.followUp({
+          content: `Great! Now, please specify the role you are interested in for the game "${selectedGame}":`,
+          components: [
+            {
+              type: 1, // Action row
+              components: [
+                {
+                  type: 3, // Select menu
+                  custom_id: 'roleDropdown',
+                  placeholder: 'Select a role',
+                  options: roleOptions,
+                },
+              ],
+            },
+          ],
+        });
 
-        const selectedRole = roleResponse.first().content;
+        // Collect the user's selection for the second dropdown
+        const roleSelection = await getDropdownSelection(interaction, 'roleDropdown', selectedGameQuestions);
+        if (!roleSelection) return; // Exit if no valid selection
+
+        const selectedRole = roleSelection;
 
         // Find users with the specified game and role
         const usersFolder = './users';
@@ -102,3 +137,33 @@ module.exports = {
     }
   },
 };
+
+// Helper function to get the user's selection from a dropdown
+async function getDropdownSelection(interaction, customId, validOptions) {
+  const filter = (interaction) =>
+    interaction.customId === customId &&
+    interaction.user.id === interaction.user.id &&
+    validOptions.includes(interaction.values[0]);
+
+  const collector = interaction.channel.createMessageComponentCollector({
+    filter,
+    time: 60000, // 1 minute
+  });
+
+  try {
+    const collected = await collector.next;
+    if (!collected) {
+      interaction.followUp('No valid response received within the time limit. The command has been canceled.');
+      return null;
+    }
+
+    return collected.values[0];
+  } finally {
+    collector.stop();
+  }
+}
+
+// Function to log errors to the newest log file
+function logToFile(errorMessage) {
+  // Implement your logToFile logic here
+}

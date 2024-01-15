@@ -185,7 +185,7 @@ async function getDropdownSelection(interaction, customId, validOptions) {
   try {
     const collected = await collector.next;
     if (!collected) {
-      interaction.channel.send('No valid response received within the time limit. The command has been canceled.');
+      interaction.followUp('No valid response received within the time limit. The command has been canceled.');
       return null;
     }
 

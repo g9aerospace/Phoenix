@@ -57,14 +57,14 @@ module.exports = {
 
       const shortMessage = collectedShortMessage.first().content;
 
-      // Ask the user to specify the game using the first dropdown
+      // Ask the user to specify the games using the first dropdown
       const gameData = require('../assets/questions.json');
       const games = gameData.games.map(game => game.name);
       const gameOptions = games.map(game => ({ label: game, value: game }));
 
       // Send initial message
       await interaction.followUp({
-        content: 'Please specify the game you are interested in:',
+        content: 'Please specify the games you are interested in:',
         components: [
           {
             type: 1, // Action row
@@ -72,8 +72,9 @@ module.exports = {
               {
                 type: 3, // Select menu
                 custom_id: 'gameDropdown',
-                placeholder: 'Select a game',
+                placeholder: 'Select games',
                 options: gameOptions,
+                max_values: gameOptions.length, // Allow selecting multiple games
               },
             ],
           },
@@ -86,56 +87,56 @@ module.exports = {
 
       const selectedGames = gameSelection.values;
 
-      // Get questions for all selected games
-      const selectedGameQuestions = selectedGames.flatMap(selectedGame =>
-        gameData.games.find(game => game.name === selectedGame)?.questions || []
-      );
-      const roleOptions = selectedGameQuestions.map(question => ({ label: question, value: question }));
+      // Create a separate selector for each selected game
+      for (const selectedGame of selectedGames) {
+        const selectedGameQuestions = gameData.games.find(game => game.name === selectedGame)?.questions;
+        const roleOptions = selectedGameQuestions.map(question => ({ label: question, value: question }));
 
-      // Ask the user to specify roles for the selected games using the second dropdown
-      await interaction.followUp({
-        content: `Great! Now, please specify the roles you are interested in for the selected games:`,
-        components: [
-          {
-            type: 1, // Action row
-            components: [
-              {
-                type: 3, // Select menu
-                custom_id: 'roleDropdown',
-                placeholder: 'Select roles',
-                options: roleOptions,
-                max_values: roleOptions.length, // Allow selecting multiple roles
-              },
-            ],
-          },
-        ],
-      });
+        // Ask the user to specify roles for the selected game using the second dropdown
+        await interaction.followUp({
+          content: `Great! Now, please specify the roles you are interested in for the game "${selectedGame}":`,
+          components: [
+            {
+              type: 1, // Action row
+              components: [
+                {
+                  type: 3, // Select menu
+                  custom_id: `roleDropdown_${selectedGame}`,
+                  placeholder: 'Select roles',
+                  options: roleOptions,
+                  max_values: roleOptions.length, // Allow selecting multiple roles
+                },
+              ],
+            },
+          ],
+        });
 
-      // Collect the user's selection for the second dropdown
-      const roleSelection = await getDropdownSelection(interaction, 'roleDropdown', selectedGameQuestions);
-      if (!roleSelection) return; // Exit if no valid selection
+        // Collect the user's selection for the second dropdown
+        const roleSelection = await getDropdownSelection(interaction, `roleDropdown_${selectedGame}`, selectedGameQuestions);
+        if (!roleSelection) return; // Exit if no valid selection
 
-      const selectedRoles = roleSelection.values;
+        const selectedRoles = roleSelection.values;
 
-      // Save user information
-      const userData = {
-        userId: interaction.user.id,
-        username: interaction.user.username,
-        shortMessage,
-        roleList: selectedRoles.map(role => `${role}`).join('\n'),
-      };
+        // Save user information
+        const userData = {
+          userId: interaction.user.id,
+          username: interaction.user.username,
+          shortMessage,
+          roleList: selectedRoles.map(role => `${selectedGame}: ${role}`).join('\n'),
+        };
 
-      writeUserData(userData);
+        writeUserData(userData);
 
-      // Notify the user about the successful update
-      const successMessage = `User information updated successfully! You selected the following roles:\n${selectedRoles.map(role => `- ${role}`).join('\n')}`;
-      interaction.followUp({
-        content: successMessage,
-        ephemeral: true, // Send an ephemeral message visible only to the user
-      });
+        // Notify the user about the successful update for each game
+        const successMessage = `User information updated successfully for the game "${selectedGame}"! You selected the following roles:\n${selectedRoles.map(role => `- ${role}`).join('\n')}`;
+        interaction.followUp({
+          content: successMessage,
+          ephemeral: true, // Send an ephemeral message visible only to the user
+        });
 
-      // Log success message using the shared log function
-      sharedLog(successMessage);
+        // Log success message using the shared log function
+        sharedLog(successMessage);
+      }
 
     } catch (error) {
       const errorMessage = `Error executing "/setinfo" command: ${error}`;

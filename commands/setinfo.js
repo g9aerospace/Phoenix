@@ -31,7 +31,7 @@ module.exports = {
   },
   data: {
     name: 'setinfo',
-    description: 'Set user information including short message, game, and role.',
+    description: 'Set user information including short message, game/application, and role.',
   },
   execute: async (interaction, sharedLog) => {
     try {
@@ -72,7 +72,7 @@ module.exports = {
               {
                 type: 3, // Select menu
                 custom_id: 'gameDropdown',
-                placeholder: 'Select games',
+                placeholder: 'Select games/applications',
                 options: gameOptions,
                 max_values: gameOptions.length, // Allow selecting multiple games
               },
@@ -94,7 +94,7 @@ module.exports = {
 
         // Ask the user to specify roles for the selected game using the second dropdown
         await interaction.followUp({
-          content: `Great! Now, please specify the roles you are interested in for the game "${selectedGame}":`,
+          content: `Great! Now, please specify the roles you are interested in for the game/application "${selectedGame}":`,
           components: [
             {
               type: 1, // Action row
@@ -128,7 +128,7 @@ module.exports = {
         writeUserData(userData);
 
         // Notify the user about the successful update for each game
-        const successMessage = `User information updated successfully for the game "${selectedGame}"! You selected the following roles:\n${selectedRoles.map(role => `- ${role}`).join('\n')}`;
+        const successMessage = `User information updated successfully for the game/application "${selectedGame}"! You selected the following roles:\n${selectedRoles.map(role => `- ${role}`).join('\n')}`;
         interaction.followUp({
           content: successMessage,
           ephemeral: true, // Send an ephemeral message visible only to the user

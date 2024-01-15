@@ -128,8 +128,11 @@ module.exports = {
       writeUserData(userData);
 
       // Notify the user about the successful update
-      const successMessage = `User information updated successfully!`;
-      interaction.followUp(successMessage);
+      const successMessage = `User information updated successfully! You selected the following roles:\n${selectedRoles.map(role => `- ${role}`).join('\n')}`;
+      interaction.followUp({
+        content: successMessage,
+        ephemeral: true, // Send an ephemeral message visible only to the user
+      });
 
       // Log success message using the shared log function
       sharedLog(successMessage);

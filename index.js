@@ -123,7 +123,7 @@ client.on('interactionCreate', async (interaction) => {
       console.error(`Error handling command "${commandName}": ${error}`);
       await interaction.reply('An error occurred while processing the command.');
     }
-  } else if (interaction.isSelectMenu()) {
+  } else if (interaction.isStringSelectMenu()) {
     // Handle select menu interactions
     const userTag = interaction.user.tag;
     const customId = interaction.customId;

@@ -115,9 +115,6 @@ client.on('interactionCreate', async (interaction) => {
         await require('./commands/finduser').execute(interaction, log);
       } else if (commandName === 'userinfo') {
         await require('./commands/userinfo').execute(interaction, log);
-      } else if (commandName === 'senddropdown') {
-        // Handle the senddropdown command separately
-        await require('./commands/senddropdown').execute(interaction);
       }
     } catch (error) {
       console.error(`Error handling command "${commandName}": ${error}`);

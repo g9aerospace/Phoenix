@@ -83,7 +83,6 @@ createLogFile();
 // Export webhook URL for other modules if needed
 module.exports = {
   webhookURL,
-  log, // Export log function for other modules
 };
 
 const client = new Client({
@@ -121,27 +120,41 @@ client.on('interactionCreate', async (interaction) => {
       console.error(`Error handling command "${commandName}": ${error}`);
       await interaction.reply('An error occurred while processing the command.');
     }
+  } else if (interaction.isStringSelectMenu()) {
+    // Handle select menu interactions
+    const userTag = interaction.user.tag;
+    const customId = interaction.customId;
+    const selectedValue = interaction.values[0];
+
+    // Log the interaction details to the console
+    console.log(`Select menu interaction by ${userTag}. Custom ID: ${customId}. Selected value: ${selectedValue}`);
+
+    // Handle each option separately based on the custom ID
+    switch (customId) {
+      case 'gameDropdown':
+        await handleGameDropdown(interaction, selectedValue);
+        break;
+
+      case 'roleDropdown':
+        await handleRoleDropdown(interaction, selectedValue);
+        break;
+
+      default:
+        // Handle Role selection in setinfo
+        await interaction.reply(`Submitted successfully!`);
+        break;
+    }
   }
 });
 
 // Function to handle game dropdown selection
 async function handleGameDropdown(interaction, selectedGame) {
-  await interaction.reply({ content: `You selected the game: ${selectedGame}`, ephemeral: true });
+  await interaction.reply({ content: `Ok!`, ephemeral: true });
 }
 
 // Function to handle role dropdown selection
 async function handleRoleDropdown(interaction, selectedRole) {
-  await interaction.reply({ content: `You selected the role: ${selectedRole}`, ephemeral: true });
-}
-
-// Function to handle category dropdown selection
-async function handleCategoryDropdown(interaction, selectedCategory) {
-  await interaction.reply({ content: `You selected the category: ${selectedCategory}`, ephemeral: true });
-}
-
-// Function to handle question dropdown selection
-async function handleQuestionDropdown(interaction, selectedQuestion) {
-  await interaction.reply({ content: `You selected the question: ${selectedQuestion}`, ephemeral: true });
+  await interaction.reply({ content: `Ok!`, ephemeral: true });
 }
 
 client.once('ready', async () => {

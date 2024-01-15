@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { MessageActionRow, MessageSelectMenu } = require('discord.js');
-const { log, processBotLogQueue } = require('../index'); // Include processBotLogQueue for shared queued logging
+const { log, processBotLogQueue } = require('../index');
 require('dotenv').config();
 
 // Function to read user data from a JSON file
@@ -44,6 +44,7 @@ module.exports = {
       // Log to the newest log file inside the "logs" folder
       logToFile(commandLogMessage);
 
+      // Check if the interaction has already been replied
       if (!interaction.replied) {
         // Read the predefined games and questions from the JSON file
         const gameData = require('../assets/questions.json');
@@ -83,8 +84,8 @@ module.exports = {
         const roleOptions = selectedGameQuestions.map(question => ({ label: question, value: question }));
 
         // Ask the user to specify a role for the selected game using the second dropdown
-        await interaction.channel.send({
-          content: `Great! Now, please specify the role you are interested in for the game/application"${selectedGame}":`,
+        await interaction.followUp({
+          content: `Great! Now, please specify the role you are interested in for the game/application "${selectedGame}":`,
           components: [
             {
               type: 1, // Action row
@@ -127,17 +128,17 @@ module.exports = {
         if (matchingUsers.length > 0) {
           const userInformation = matchingUsers.map(user => `\n- ${user.username} (${user.userId})`);
           const successMessage = `Users with the specified game/application "${selectedGame}" and role "${selectedRole}":${userInformation}`;
-          
+
           // Log success message using the shared log function
           sharedLog(successMessage);
-          
+
           // Log success message to the console
           console.log(successMessage);
 
           // Log success message to the newest log file inside the "logs" folder
           logToFile(successMessage);
-          
-          interaction.channel.send(successMessage);
+
+          interaction.followUp(successMessage);
         } else {
           const noUsersMessage = `No users found with the specified game/application "${selectedGame}" and role "${selectedRole}".`;
 
@@ -149,8 +150,8 @@ module.exports = {
 
           // Log no users message to the newest log file inside the "logs" folder
           logToFile(noUsersMessage);
-          
-          interaction.channel.send(noUsersMessage);
+
+          interaction.followUp(noUsersMessage);
         }
       }
     } catch (error) {
@@ -165,7 +166,11 @@ module.exports = {
       // Log error message to the newest log file inside the "logs" folder
       logToFile(errorMessage);
 
-      await interaction.reply('An error occurred while processing the command.');
+      // Check if the interaction has already been replied before attempting to reply
+      if (!interaction.replied) {
+        // Reply with an error message
+        await interaction.reply('An error occurred while processing the command.');
+      }
     }
   },
 };
@@ -179,13 +184,12 @@ async function getDropdownSelection(interaction, customId, validOptions) {
 
   const collector = interaction.channel.createMessageComponentCollector({
     filter,
-    time: 60000, // 1 minute
+    time: 15000, // 15 seconds timeout
   });
 
   try {
     const collected = await collector.next;
     if (!collected) {
-      interaction.followUp('No valid response received within the time limit. The command has been canceled.');
       return null;
     }
 

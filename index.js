@@ -121,38 +121,6 @@ client.on('interactionCreate', async (interaction) => {
       console.error(`Error handling command "${commandName}": ${error}`);
       await interaction.reply('An error occurred while processing the command.');
     }
-  } else if (interaction.isStringSelectMenu()) {
-    // Handle select menu interactions
-    const userTag = interaction.user.tag;
-    const customId = interaction.customId;
-    const selectedValue = interaction.values[0];
-
-    // Log the interaction details to the console
-    console.log(`Select menu interaction by ${userTag}. Custom ID: ${customId}. Selected value: ${selectedValue}`);
-
-    // Handle each option separately based on the custom ID
-    switch (customId) {
-      case 'gameDropdown':
-        await handleGameDropdown(interaction, selectedValue);
-        break;
-
-      case 'roleDropdown':
-        await handleRoleDropdown(interaction, selectedValue);
-        break;
-
-      case 'categoryDropdown':
-        await handleCategoryDropdown(interaction, selectedValue);
-        break;
-
-      case 'questionDropdown':
-        await handleQuestionDropdown(interaction, selectedValue);
-        break;
-
-      default:
-        // Handle unexpected custom ID
-        await interaction.reply(`Invalid selection.`);
-        break;
-    }
   }
 });
 

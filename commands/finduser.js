@@ -23,7 +23,7 @@ module.exports = {
   },
   data: {
     name: 'finduser',
-    description: 'Find users based on the specified game and role.',
+    description: 'Find users based on the specified game/application and role.',
   },
   execute: async (interaction, sharedLog) => {
     try {
@@ -54,7 +54,7 @@ module.exports = {
 
         // Ask the user to specify a game using the first dropdown
         await interaction.reply({
-          content: 'Please specify the game you are interested in:',
+          content: 'Please specify the game/application you are interested in:',
           components: [
             {
               type: 1, // Action row
@@ -62,7 +62,7 @@ module.exports = {
                 {
                   type: 3, // Select menu
                   custom_id: 'gameDropdown',
-                  placeholder: 'Select a game',
+                  placeholder: 'Select a game/application',
                   options: gameOptions,
                 },
               ],
@@ -84,7 +84,7 @@ module.exports = {
 
         // Ask the user to specify a role for the selected game using the second dropdown
         await interaction.channel.send({
-          content: `Great! Now, please specify the role you are interested in for the game "${selectedGame}":`,
+          content: `Great! Now, please specify the role you are interested in for the game/application"${selectedGame}":`,
           components: [
             {
               type: 1, // Action row
@@ -126,7 +126,7 @@ module.exports = {
         // Notify the command executor with the matching users
         if (matchingUsers.length > 0) {
           const userInformation = matchingUsers.map(user => `\n- ${user.username} (${user.userId})`);
-          const successMessage = `Users with the specified game "${selectedGame}" and role "${selectedRole}":${userInformation}`;
+          const successMessage = `Users with the specified game/application "${selectedGame}" and role "${selectedRole}":${userInformation}`;
           
           // Log success message using the shared log function
           sharedLog(successMessage);
@@ -139,7 +139,7 @@ module.exports = {
           
           interaction.channel.send(successMessage);
         } else {
-          const noUsersMessage = `No users found with the specified game "${selectedGame}" and role "${selectedRole}".`;
+          const noUsersMessage = `No users found with the specified game/application "${selectedGame}" and role "${selectedRole}".`;
 
           // Log no users message using the shared log function
           sharedLog(noUsersMessage);

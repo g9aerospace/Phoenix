@@ -149,14 +149,10 @@ client.on('interactionCreate', async (interaction) => {
 
 // Function to handle game dropdown selection
 async function handleGameDropdown(interaction, selectedGame) {
-  // Implement logic for handling the selected game here
-  await interaction.reply(`You selected the game: ${selectedGame}`);
 }
 
 // Function to handle role dropdown selection
 async function handleRoleDropdown(interaction, selectedRole) {
-  // Implement logic for handling the selected role here
-  await interaction.reply(`You selected the role: ${selectedRole}`);
 }
 
 

@@ -83,6 +83,7 @@ createLogFile();
 // Export webhook URL for other modules if needed
 module.exports = {
   webhookURL,
+  log, // Export log function for other modules
 };
 
 const client = new Client({
@@ -139,6 +140,14 @@ client.on('interactionCreate', async (interaction) => {
         await handleRoleDropdown(interaction, selectedValue);
         break;
 
+      case 'categoryDropdown':
+        await handleCategoryDropdown(interaction, selectedValue);
+        break;
+
+      case 'questionDropdown':
+        await handleQuestionDropdown(interaction, selectedValue);
+        break;
+
       default:
         // Handle unexpected custom ID
         await interaction.reply(`Invalid selection.`);
@@ -155,6 +164,16 @@ async function handleGameDropdown(interaction, selectedGame) {
 // Function to handle role dropdown selection
 async function handleRoleDropdown(interaction, selectedRole) {
   await interaction.reply({ content: `You selected the role: ${selectedRole}`, ephemeral: true });
+}
+
+// Function to handle category dropdown selection
+async function handleCategoryDropdown(interaction, selectedCategory) {
+  await interaction.reply({ content: `You selected the category: ${selectedCategory}`, ephemeral: true });
+}
+
+// Function to handle question dropdown selection
+async function handleQuestionDropdown(interaction, selectedQuestion) {
+  await interaction.reply({ content: `You selected the question: ${selectedQuestion}`, ephemeral: true });
 }
 
 client.once('ready', async () => {

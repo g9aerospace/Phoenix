@@ -1,5 +1,3 @@
-// index.js
-
 const fs = require('fs');
 const path = require('path');
 const { Client, GatewayIntentBits, REST } = require('discord.js');
@@ -97,6 +95,63 @@ const client = new Client({
 
 const commands = [];
 
+client.on('interactionCreate', async (interaction) => {
+  if (interaction.isCommand()) {
+    const { commandName } = interaction;
+
+    try {
+      // Handle each command separately
+      if (commandName === 'ping') {
+        await require('./commands/ping').execute(interaction, log);
+      } else if (commandName === 'hello') {
+        await require('./commands/hello').execute(interaction, log);
+      } else if (commandName === 'help') {
+        await require('./commands/help').execute(interaction, log);
+      } else if (commandName === 'info') {
+        await require('./commands/info').execute(interaction, log);
+      } else if (commandName === 'setinfo') {
+        await require('./commands/setinfo').execute(interaction, log);
+      } else if (commandName === 'finduser') {
+        await require('./commands/finduser').execute(interaction, log);
+      } else if (commandName === 'userinfo') {
+        await require('./commands/userinfo').execute(interaction, log);
+      } else if (commandName === 'senddropdown') {
+        // Handle the senddropdown command separately
+        await require('./commands/senddropdown').execute(interaction);
+      }
+    } catch (error) {
+      console.error(`Error handling command "${commandName}": ${error}`);
+      await interaction.reply('An error occurred while processing the command.');
+    }
+  } else if (interaction.isStringSelectMenu()) {
+    // Handle select menu interactions
+    const userTag = interaction.user.tag;
+    const selectedValue = interaction.values[0];
+
+    // Log the interaction details to the console
+    console.log(`Select menu interaction by ${userTag}. Selected value: ${selectedValue}`);
+
+    // Handle each option separately
+    switch (selectedValue) {
+      case 'option1':
+        // Handle Option 1
+        await interaction.reply(`You selected Option 1.`);
+        break;
+      
+      case 'option2':
+        // Handle Option 2
+        await interaction.reply(`You selected Option 2.`);
+        break;
+
+      default:
+        // Handle unexpected value
+        await interaction.reply(`Invalid selection.`);
+        break;
+    }
+  }
+});
+
+
 client.once('ready', async () => {
   try {
     log(`Logged in as ${client.user.tag}`);
@@ -108,36 +163,6 @@ client.once('ready', async () => {
     await refreshSlashCommands();
   } catch (error) {
     log(`Error during startup: ${error}`);
-  }
-});
-
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isCommand()) return;
-
-  const { commandName } = interaction;
-
-  try {
-    // Handle each command separately
-    if (commandName === 'ping') {
-      await require('./commands/ping').execute(interaction, log);
-    } else if (commandName === 'hello') {
-      await require('./commands/hello').execute(interaction, log);
-    } else if (commandName === 'help') {
-      await require('./commands/help').execute(interaction, log);
-    } else if (commandName === 'info') {
-      await require('./commands/info').execute(interaction, log);
-    } else if (commandName === 'setinfo') {
-      await require('./commands/setinfo').execute(interaction, log);
-    } else if (commandName === 'finduser') {
-      await require('./commands/finduser').execute(interaction, log);
-    } else if (commandName === 'userinfo') {
-      await require('./commands/userinfo').execute(interaction, log);
-    }
-
-
-  } catch (error) {
-    log(`Error handling command "${commandName}": ${error}`);
-    await interaction.reply('An error occurred while processing the command.');
   }
 });
 

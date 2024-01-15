@@ -149,11 +149,14 @@ client.on('interactionCreate', async (interaction) => {
 
 // Function to handle game dropdown selection
 async function handleGameDropdown(interaction, selectedGame) {
+  await interaction.reply({ content: `You selected the game: ${selectedGame}`, ephemeral: true });
 }
 
 // Function to handle role dropdown selection
 async function handleRoleDropdown(interaction, selectedRole) {
+  await interaction.reply({ content: `You selected the role: ${selectedRole}`, ephemeral: true });
 }
+
 
 
 

@@ -84,15 +84,17 @@ module.exports = {
       const gameSelection = await getDropdownSelection(interaction, 'gameDropdown', games);
       if (!gameSelection) return; // Exit if no valid selection
 
-      const selectedGame = gameSelection;
+      const selectedGames = gameSelection.values;
 
-      // Get questions for the selected game
-      const selectedGameQuestions = gameData.games.find(game => game.name === selectedGame)?.questions;
+      // Get questions for all selected games
+      const selectedGameQuestions = selectedGames.flatMap(selectedGame =>
+        gameData.games.find(game => game.name === selectedGame)?.questions || []
+      );
       const roleOptions = selectedGameQuestions.map(question => ({ label: question, value: question }));
 
-      // Ask the user to specify a role for the selected game using the second dropdown
+      // Ask the user to specify roles for the selected games using the second dropdown
       await interaction.followUp({
-        content: `Great! Now, please specify the role you are interested in for the game "${selectedGame}":`,
+        content: `Great! Now, please specify the roles you are interested in for the selected games:`,
         components: [
           {
             type: 1, // Action row
@@ -100,8 +102,9 @@ module.exports = {
               {
                 type: 3, // Select menu
                 custom_id: 'roleDropdown',
-                placeholder: 'Select a role',
+                placeholder: 'Select roles',
                 options: roleOptions,
+                max_values: roleOptions.length, // Allow selecting multiple roles
               },
             ],
           },
@@ -112,14 +115,14 @@ module.exports = {
       const roleSelection = await getDropdownSelection(interaction, 'roleDropdown', selectedGameQuestions);
       if (!roleSelection) return; // Exit if no valid selection
 
-      const selectedRole = roleSelection;
+      const selectedRoles = roleSelection.values;
 
       // Save user information
       const userData = {
         userId: interaction.user.id,
         username: interaction.user.username,
         shortMessage,
-        roleList: `${selectedGame}: ${selectedRole}`,
+        roleList: selectedRoles.map(role => `${role}`).join('\n'),
       };
 
       writeUserData(userData);
@@ -157,15 +160,13 @@ async function getDropdownSelection(interaction, customId, validOptions) {
     time: 60000, // 1 minute
   });
 
-  try {
-    const collected = await collector.next;
-    if (!collected) {
-      interaction.followUp('No valid response received within the time limit. The command has been canceled.');
-      return null;
-    }
+  return new Promise((resolve) => {
+    collector.on('collect', (collected) => {
+      resolve(collected);
+    });
 
-    return collected.values[0];
-  } finally {
-    collector.stop();
-  }
+    collector.on('end', () => {
+      resolve(null);
+    });
+  });
 }

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { MessageActionRow, MessageSelectMenu } = require('discord.js');
-const { log, processBotLogQueue } = require('../index');
+const { log, processBotLogQueue } = require('../index'); // Include processBotLogQueue for shared queued logging
 require('dotenv').config();
 
 // Function to read user data from a JSON file
@@ -19,6 +19,7 @@ function readUserData(userId) {
 
 module.exports = {
   setup: (client, sharedLog) => {
+    // Any setup logic can go here if needed
   },
   data: {
     name: 'finduser',
@@ -77,6 +78,9 @@ module.exports = {
 
         // Get questions for the selected game
         const selectedGameQuestions = gameData.games.find(game => game.name === selectedGame)?.questions;
+
+        // Define the options for the second dropdown (roles)
+        const roleOptions = selectedGameQuestions.map(question => ({ label: question, value: question }));
 
         // Ask the user to specify a role for the selected game using the second dropdown
         await interaction.followUp({

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { MessageActionRow, MessageSelectMenu } = require('discord.js');
-const { log } = require('../index');
+const { log, processBotLogQueue } = require('../index'); // Include processBotLogQueue for shared queued logging
 require('dotenv').config();
 
 // Function to read user data from a JSON file
@@ -35,7 +35,14 @@ module.exports = {
       }
 
       // Log using the shared log function
-      sharedLog(`Command "/finduser" used by ${userTag}.`);
+      const commandLogMessage = `Command "/finduser" used by ${userTag}.`;
+      sharedLog(commandLogMessage);
+
+      // Log to console
+      console.log(commandLogMessage);
+
+      // Log to the newest log file inside the "logs" folder
+      logToFile(commandLogMessage);
 
       if (!interaction.replied) {
         // Read the predefined games and questions from the JSON file
@@ -119,18 +126,43 @@ module.exports = {
         // Notify the command executor with the matching users
         if (matchingUsers.length > 0) {
           const userInformation = matchingUsers.map(user => `\n- ${user.username} (${user.userId})`);
-          interaction.followUp(`Users with the specified game "${selectedGame}" and role "${selectedRole}":${userInformation}`);
+          const successMessage = `Users with the specified game "${selectedGame}" and role "${selectedRole}":${userInformation}`;
+          
+          // Log success message using the shared log function
+          sharedLog(successMessage);
+          
+          // Log success message to the console
+          console.log(successMessage);
+
+          // Log success message to the newest log file inside the "logs" folder
+          logToFile(successMessage);
+          
+          interaction.followUp(successMessage);
         } else {
-          interaction.followUp(`No users found with the specified game "${selectedGame}" and role "${selectedRole}".`);
+          const noUsersMessage = `No users found with the specified game "${selectedGame}" and role "${selectedRole}".`;
+
+          // Log no users message using the shared log function
+          sharedLog(noUsersMessage);
+
+          // Log no users message to the console
+          console.log(noUsersMessage);
+
+          // Log no users message to the newest log file inside the "logs" folder
+          logToFile(noUsersMessage);
+          
+          interaction.followUp(noUsersMessage);
         }
       }
     } catch (error) {
       const errorMessage = `Error executing "/finduser" command: ${error}`;
 
-      // Log using the shared log function
+      // Log error message using the shared log function
       sharedLog(errorMessage);
 
-      // Log error to the newest log file
+      // Log error message to the console
+      console.error(errorMessage);
+
+      // Log error message to the newest log file inside the "logs" folder
       logToFile(errorMessage);
 
       await interaction.reply('An error occurred while processing the command.');
@@ -163,7 +195,24 @@ async function getDropdownSelection(interaction, customId, validOptions) {
   }
 }
 
-// Function to log errors to the newest log file
-function logToFile(errorMessage) {
-  // Implement your logToFile logic here
+// Function to log messages to the newest log file inside the "logs" folder
+function logToFile(message) {
+  const logsFolder = './logs';
+
+  // Ensure the logs folder exists
+  if (!fs.existsSync(logsFolder)) {
+    fs.mkdirSync(logsFolder);
+  }
+
+  // Get the newest log file in the "logs" folder
+  const logFiles = fs.readdirSync(logsFolder).filter(file => file.endsWith('.log'));
+  const newestLogFile = logFiles.reduce((prev, current) => {
+    const prevMtime = fs.statSync(path.join(logsFolder, prev)).mtime;
+    const currentMtime = fs.statSync(path.join(logsFolder, current)).mtime;
+    return prevMtime > currentMtime ? prev : current;
+  }, '');
+
+  // Append the message to the newest log file
+  const logFilePath = path.join(logsFolder, newestLogFile);
+  fs.appendFileSync(logFilePath, `${message}\n`);
 }

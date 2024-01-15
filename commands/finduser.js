@@ -83,7 +83,7 @@ module.exports = {
         const roleOptions = selectedGameQuestions.map(question => ({ label: question, value: question }));
 
         // Ask the user to specify a role for the selected game using the second dropdown
-        await interaction.followUp({
+        await interaction.channel.send({
           content: `Great! Now, please specify the role you are interested in for the game "${selectedGame}":`,
           components: [
             {
@@ -137,7 +137,7 @@ module.exports = {
           // Log success message to the newest log file inside the "logs" folder
           logToFile(successMessage);
           
-          interaction.followUp(successMessage);
+          interaction.channel.send(successMessage);
         } else {
           const noUsersMessage = `No users found with the specified game "${selectedGame}" and role "${selectedRole}".`;
 
@@ -150,7 +150,7 @@ module.exports = {
           // Log no users message to the newest log file inside the "logs" folder
           logToFile(noUsersMessage);
           
-          interaction.followUp(noUsersMessage);
+          interaction.channel.send(noUsersMessage);
         }
       }
     } catch (error) {
@@ -185,7 +185,7 @@ async function getDropdownSelection(interaction, customId, validOptions) {
   try {
     const collected = await collector.next;
     if (!collected) {
-      interaction.followUp('No valid response received within the time limit. The command has been canceled.');
+      interaction.channel.send('No valid response received within the time limit. The command has been canceled.');
       return null;
     }
 

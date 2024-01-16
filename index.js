@@ -56,15 +56,17 @@ client.once('ready', async () => {
 
 client.on('interactionCreate', async (interaction) => {
     try {
-        const interactionStartTime = Date.now();
-        const userWhoTriggered = interaction.user.tag;
-
-        if (!interaction.isCommand() && !interaction.isModalSubmit()) return;
-        log('INFO', `Received interaction: ${interaction.type} from ${userWhoTriggered}`);
+        if (!interaction.isCommand() && !interaction.isModalSubmit() && !interaction.isSelectMenu()) {
+            // Handle other types of interactions or catch any unexpected cases
+            // Add your default handling or error response here
+            log('WARNING', `Unhandled interaction type: ${interaction.type}`);
+            await interaction.reply({ content: 'Unhandled interaction type.', ephemeral: true });
+            return;
+        }
 
         if (interaction.isCommand()) {
+            // Handle command interactions
             const { commandName } = interaction;
-            log('INFO', `Command interaction received: ${commandName} from ${userWhoTriggered}`);
 
             try {
                 // Dynamically handle commands based on the command name
@@ -77,42 +79,52 @@ client.on('interactionCreate', async (interaction) => {
                 await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
             } finally {
                 const interactionEndTime = Date.now();
-                const interactionDuration = (interactionEndTime - interactionStartTime) / 1000; // Duration in seconds
+                const interactionDuration = (interactionEndTime - interaction.createdAt) / 1000; // Duration in seconds
                 log('INFO', `Interaction duration: ${interactionDuration.toFixed(2)} seconds`);
             }
+        } else if (interaction.isModalSubmit() && interaction.customId === 'setAboutCommand') {
+            // Handle modal submission for a specific custom ID ('setAboutCommand')
+            // Extract data from modal submission
+            const userDescription = interaction.values ? interaction.values[0] : null; // Ensure values array is defined
+
+            // Save data to a JSON file named after the user's userId
+            const userId = interaction.user.id;
+            const userData = { userDescription };
+
+            // Specify the file path
+            const filePath = `./users/${userId}.json`;
+
+            try {
+                // Ensure the "users" directory exists, create it if not
+                await fs.promises.mkdir('./users', { recursive: true });
+
+                // Write the data to the JSON file
+                await fs.promises.writeFile(filePath, JSON.stringify(userData, null, 2));
+                log('INFO', `User description saved to ${filePath}`);
+
+                // Reply to the user
+                await interaction.reply({ content: 'User description set successfully!', ephemeral: true });
+            } catch (error) {
+                console.error(`Error saving user description for user ${userId}:`, error);
+                log('ERROR', `Error saving user description for user ${userId}: ${error.message}`);
+                await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
+            }
+        } else if (interaction.isSelectMenu() && interaction.customId === 'starter') {
+            // Handle selection from the dropdown menu
+            const selectedValues = interaction.values || []; // Ensure values array is defined
+
+            // Respond to the user based on their selection
+            await interaction.reply({
+                content: `You selected: ${selectedValues.join(', ')}`,
+                ephemeral: true,
+            });
         }
-
-        if (interaction.isModalSubmit() && interaction.customId === 'setAboutCommand') {
-          // Extract data from modal submission
-          const userDescription = interaction.fields.getTextInputValue('descriptionInput');
-
-          // Save data to a JSON file named after the user's userId
-          const userId = interaction.user.id;
-          const userData = { userDescription };
-
-          // Specify the file path
-          const filePath = `./users/${userId}.json`;
-
-          try {
-              // Ensure the "users" directory exists, create it if not
-              await fs.promises.mkdir('./users', { recursive: true });
-
-              // Write the data to the JSON file
-              await fs.promises.writeFile(filePath, JSON.stringify(userData, null, 2));
-              console.log(`User description saved to ${filePath}`);
-          } catch (error) {
-              console.error(`Error saving user description for user ${userId}:`, error);
-              await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
-              return;
-          }
-
-          // Reply to the user
-          await interaction.reply({ content: 'User description set successfully!', ephemeral: true });
-      }
-
     } catch (error) {
+        // Handle any errors or log them as needed
+        console.error(`Error during interaction handling: ${error.message}`);
         log('ERROR', `Error during interaction handling: ${error.message}`);
         log('WARNING', 'There was an error during interaction handling.');
+        await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
     }
 });
 

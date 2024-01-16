@@ -108,7 +108,7 @@ client.on('interactionCreate', async (interaction) => {
                 log('ERROR', `Error saving user description for user ${userId}: ${error.message}`);
                 await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
             }
-        } else if (interaction.isSelectMenu() && interaction.customId === 'starter') {
+        } else if (interaction.isSelectMenu() && interaction.customId === 'jobs') {
             // Handle selection from the dropdown menu
             const selectedValues = interaction.values || []; // Ensure values array is defined
 

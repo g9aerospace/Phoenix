@@ -7,8 +7,8 @@ module.exports = {
     },
     async execute(interaction) {
         const select = new StringSelectMenuBuilder()
-            .setCustomId('starter')
-            .setPlaceholder('Make a selection!')
+            .setCustomId('jobs')
+            .setPlaceholder('Choose the jobs that apply to you')
             .setMinValues(1)  // Minimum number of selected options (set to 1 to allow at least one selection)
             .setMaxValues(3)  // Maximum number of selected options (set to the number of options to allow selecting all)
             .addOptions(
@@ -30,7 +30,7 @@ module.exports = {
             .addComponents(select);
 
         await interaction.reply({
-            content: 'Choose your starter!',
+            content: 'Choose your Jobs',
             components: [row],
         });
     },

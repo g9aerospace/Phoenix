@@ -2,6 +2,8 @@ const fs = require('fs');
 const { Client, GatewayIntentBits } = require('discord.js');
 const dotenv = require('dotenv');
 const { log } = require('./assets/logger');
+const servicesData = require('./assets/services.json');
+const { ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, SlashCommandBuilder } = require('discord.js');
 
 dotenv.config();
 
@@ -108,16 +110,41 @@ client.on('interactionCreate', async (interaction) => {
                 log('ERROR', `Error saving user description for user ${userId}: ${error.message}`);
                 await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
             }
-        } else if (interaction.isSelectMenu() && interaction.customId === 'jobs') {
-            // Handle selection from the dropdown menu
-            const selectedValues = interaction.values || []; // Ensure values array is defined
+        } else  if (interaction.isSelectMenu() && interaction.customId === 'jobs') {
+          // Handle job selection from the first dropdown
 
-            // Respond to the user based on their selection
-            await interaction.reply({
-                content: `You selected: ${selectedValues.join(', ')}`,
-                ephemeral: true,
-            });
-        }
+          // Get the selected jobs
+          const selectedJobs = interaction.values || [];
+
+          // Create options for the second dropdown based on the selected jobs
+          const roleOptions = [];
+          for (const selectedJob of selectedJobs) {
+              const jobData = servicesData.services.find(service => service.job === selectedJob);
+              if (jobData) {
+                  roleOptions.push(
+                      ...jobData.roles.map(role => new StringSelectMenuOptionBuilder()
+                          .setLabel(role)
+                          .setDescription(`Select roles for ${selectedJob}`)
+                          .setValue(`${selectedJob}-${role}`)
+                      )
+                  );
+              }
+          }
+
+          // Create the second dropdown for roles
+          const selectRoles = new StringSelectMenuBuilder()
+              .setCustomId('roles')
+              .setPlaceholder('Choose the roles for selected jobs')
+              .setMinValues(1)
+              .setMaxValues(roleOptions.length)
+              .addOptions(...roleOptions);
+
+          // Send the second dropdown to the user
+          await interaction.reply({
+              content: 'Choose your Roles',
+              components: [new ActionRowBuilder().addComponents(selectRoles)],
+          });
+      }
     } catch (error) {
         // Handle any errors or log them as needed
         console.error(`Error during interaction handling: ${error.message}`);

@@ -81,6 +81,36 @@ client.on('interactionCreate', async (interaction) => {
                 log('INFO', `Interaction duration: ${interactionDuration.toFixed(2)} seconds`);
             }
         }
+
+        if (interaction.isModalSubmit() && interaction.customId === 'addServerCommand') {
+          // Extract data from modal submissions
+          const serverName = interaction.fields.getTextInputValue('nameInput');
+          const serverAddress = interaction.fields.getTextInputValue('addressInput');
+          const message = interaction.fields.getTextInputValue('messageInput');
+    
+          // Save data to a JSON file named after the user's userId
+          const userId = interaction.user.id;
+          const userData = { serverName, serverAddress, message };
+    
+          // Specify the file path
+          const filePath = `./users/${userId}.json`;
+    
+          try {
+              // Ensure the "users" directory exists, create it if not
+              await fs.promises.mkdir('./users', { recursive: true });
+    
+              // Write the data to the JSON file
+              await fs.promises.writeFile(filePath, JSON.stringify(userData, null, 2));
+              console.log(`Data saved to ${filePath}`);
+          } catch (error) {
+              console.error(`Error saving data for user ${userId}:`, error);
+              await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
+              return;
+          }
+    
+          // Reply to the user
+          await interaction.reply({ content: 'Server information received and saved successfully!', ephemeral: true });
+      }
     } catch (error) {
         log('ERROR', `Error during interaction handling: ${error.message}`);
         log('WARNING', 'There was an error during interaction handling.');

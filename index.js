@@ -5,6 +5,8 @@ const { log } = require('./assets/logger');
 
 dotenv.config();
 
+log('INFO', 'Bot starting up...');
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -13,16 +15,26 @@ const client = new Client({
     ],
 });
 
-client.once('ready', async () => {
-    log('INFO', `Logged in as ${client.user.tag}`);
-    log('INFO', 'Bot is now ready.');
+const startTime = Date.now();
 
+client.once('ready', async () => {
     try {
+        const endTime = Date.now();
+        const uptime = (endTime - startTime) / 1000; // Uptime in seconds
+        log('INFO', `Logged in as ${client.user.tag}`);
+        log('INFO', `Bot is now ready. Uptime: ${uptime.toFixed(2)} seconds`);
+        log('INFO', `Bot's ping: ${client.ws.ping}ms`);
+
+        // Set initial activity status
+        setBotActivityStatus();
+
         // Fetch the global application
         const application = await client.application.fetch();
+        log('INFO', 'Global application fetched successfully.');
 
         // Set global commands
         await application.commands.set([]);
+        log('INFO', 'Global commands set successfully.');
 
         const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
         for (const file of commandFiles) {
@@ -30,27 +42,64 @@ client.once('ready', async () => {
             await application.commands.create(command.data);
             log('INFO', `Global slash command loaded/reloaded: ${file}`);
         }
+
+        // Update activity status every 5 minutes
+        setInterval(() => {
+            setBotActivityStatus();
+            log('INFO', 'Bot activity status updated.');
+        }, 5 * 60 * 1000); // 5 minutes in milliseconds
     } catch (error) {
-        console.error('Error setting global commands:', error.message);
+        log('ERROR', `Error during initialization: ${error.message}`);
+        log('WARNING', 'Initialization may not have completed successfully.');
     }
 });
 
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isCommand() && !interaction.isModalSubmit()) return;
+    try {
+        const interactionStartTime = Date.now();
+        const userWhoTriggered = interaction.user.tag;
 
-    if (interaction.isCommand()) {
-        const { commandName } = interaction;
+        if (!interaction.isCommand() && !interaction.isModalSubmit()) return;
+        log('INFO', `Received interaction: ${interaction.type} from ${userWhoTriggered}`);
 
-        try {
-            // Dynamically handle commands based on the command name
-            const command = require(`./commands/${commandName}.js`);
-            await command.execute(interaction);
-        } catch (error) {
-            console.error(`Error handling command '${commandName}': ${error.message}`);
-            await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
+        if (interaction.isCommand()) {
+            const { commandName } = interaction;
+            log('INFO', `Command interaction received: ${commandName} from ${userWhoTriggered}`);
+
+            try {
+                // Dynamically handle commands based on the command name
+                const command = require(`./commands/${commandName}.js`);
+                await command.execute(interaction);
+                log('INFO', `Command '${commandName}' executed successfully.`);
+            } catch (error) {
+                log('ERROR', `Error handling command '${commandName}': ${error.message}`);
+                log('WARNING', 'There was an error while executing a command.');
+                await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
+            } finally {
+                const interactionEndTime = Date.now();
+                const interactionDuration = (interactionEndTime - interactionStartTime) / 1000; // Duration in seconds
+                log('INFO', `Interaction duration: ${interactionDuration.toFixed(2)} seconds`);
+            }
         }
+    } catch (error) {
+        log('ERROR', `Error during interaction handling: ${error.message}`);
+        log('WARNING', 'There was an error during interaction handling.');
     }
-
 });
 
 client.login(process.env.TOKEN);
+log('INFO', 'Bot login initiated.');
+
+function setBotActivityStatus() {
+    const activities = [
+        { name: 'with Discord.js', type: 'PLAYING' },
+        { name: 'with commands', type: 'PLAYING' },
+        { name: 'with logs', type: 'WATCHING' },
+        { name: 'for interactions', type: 'LISTENING' },
+    ];
+
+    const activity = activities[Math.floor(Math.random() * activities.length)];
+
+    client.user.setActivity(activity.name, { type: activity.type });
+    log('INFO', `Bot activity status updated: ${activity.type} ${activity.name}`);
+}

@@ -2,8 +2,8 @@ const { ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder
 
 module.exports = {
     data: {
-        name: 'dropdown',
-        description: 'Send a dropdown menu to the user.',
+        name: 'setjobs',
+        description: 'Select the jobs which apply to you',
     },
     async execute(interaction) {
         const select = new StringSelectMenuBuilder()

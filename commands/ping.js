@@ -1,63 +1,52 @@
-const fs = require('fs');
-const path = require('path');
-const { log } = require('../index');
-const axios = require('axios');
-require('dotenv').config();
+const { MessageEmbed } = require('discord.js');
+const { log } = require('../assets/logger');
+const { name, icon } = require('../package.json'); 
 
 module.exports = {
-  setup: (client, sharedLog) => {
-    module.exports.client = client;
-    module.exports.sharedLog = sharedLog;
-  },
-  data: {
-    name: 'ping',
-    description: 'Get the bot\'s uptime and ping.',
-  },
-  execute: async (interaction) => {
-    try {
-      const userTag = interaction.user.tag;
+    data: {
+        name: 'ping',
+        description: 'Ping command',
+    },
+    async execute(interaction) {
+        try {
+            log('INFO', 'Ping command executed', interaction.guild.name);
 
-      // Ensure the client object is accessible within the execute function
-      const client = module.exports.client;
-      const sharedLog = module.exports.sharedLog;
+            // Calculate the bot's latency (ensure it's positive)
+            const latency = Math.abs(Date.now() - interaction.createdTimestamp);
 
-      // Calculate bot uptime
-      const uptime = calculateUptime(client.uptime);
+            // Calculate bot uptime
+            const uptime = process.uptime();
+            const formattedUptime = formatUptime(uptime);
 
-      // Get bot ping
-      const ping = client.ws.ping !== -1 ? `${client.ws.ping}ms` : 'Calculating...';
+            // Create an embed with latency and uptime fields
+            const embed = {
+                color: 0x0099ff,
+                title: 'Pong!',
+                fields: [
+                    { name: 'Bot Latency', value: `${latency}ms`, inline: true },
+                    { name: 'Bot Uptime', value: formattedUptime, inline: true },
+                ],
+                footer: {
+                    text: name,
+                    icon_url: icon,
+                },
+            };
 
-      // Log using the shared log function
-      sharedLog(`Command "/ping" used by ${userTag}. Bot Uptime: ${uptime}. Bot Ping: ${ping}`);
-
-      // Reply with bot uptime and ping as an embed
-      const embed = {
-        title: 'Bot Uptime and Ping',
-        fields: [
-          { name: 'Uptime', value: uptime },
-          { name: 'Ping', value: ping },
-        ],
-        color: 0x0099ff,
-      };
-
-      await interaction.reply({ embeds: [embed] });
-    } catch (error) {
-      const errorMessage = `Error executing "/ping" command: ${error}`;
-
-      // Log error using the shared log function
-      sharedLog(errorMessage);
-
-      await interaction.reply('An error occurred while processing the command.');
-    }
-  },
+            // Reply to the interaction with the embedded message
+            await interaction.reply({ embeds: [embed] });
+        } catch (error) {
+            log('ERROR', `Error executing ping command: ${error.message}`, interaction.guild.name);
+            console.error(error);
+            await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
+        }
+    },
 };
 
-// Function to calculate bot uptime
-function calculateUptime(uptime) {
-  const seconds = Math.floor((uptime / 1000) % 60);
-  const minutes = Math.floor((uptime / (1000 * 60)) % 60);
-  const hours = Math.floor((uptime / (1000 * 60 * 60)) % 24);
-  const days = Math.floor(uptime / (1000 * 60 * 60 * 24));
+// Function to format uptime in a readable way
+function formatUptime(uptime) {
+    const seconds = Math.floor(uptime % 60);
+    const minutes = Math.floor((uptime / 60) % 60);
+    const hours = Math.floor(uptime / 3600);
 
-  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    return `${hours}h ${minutes}m ${seconds}s`;
 }

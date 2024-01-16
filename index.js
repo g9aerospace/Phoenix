@@ -83,9 +83,8 @@ client.on('interactionCreate', async (interaction) => {
                 log('INFO', `Interaction duration: ${interactionDuration.toFixed(2)} seconds`);
             }
         } else if (interaction.isModalSubmit() && interaction.customId === 'setAboutCommand') {
-            // Handle modal submission for a specific custom ID ('setAboutCommand')
             // Extract data from modal submission
-            const userDescription = interaction.values ? interaction.values[0] : null; // Ensure values array is defined
+            const userDescription = interaction.fields.getTextInputValue('descriptionInput');
 
             // Save data to a JSON file named after the user's userId
             const userId = interaction.user.id;

@@ -66,24 +66,24 @@ client.on('interactionCreate', async (interaction) => {
             return;
         }
 
-        if (interaction.isCommand()) {
-            // Handle command interactions
-            const { commandName } = interaction;
+          if (interaction.isCommand()) {
+              // Handle command interactions
+              const { commandName } = interaction;
 
-            try {
-                // Dynamically handle commands based on the command name
-                const command = require(`./commands/${commandName}.js`);
-                await command.execute(interaction);
-                log('INFO', `Command '${commandName}' executed successfully.`);
-            } catch (error) {
-                log('ERROR', `Error handling command '${commandName}': ${error.message}`);
-                log('WARNING', 'There was an error while executing a command.');
-                await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
-            } finally {
-                const interactionEndTime = Date.now();
-                const interactionDuration = (interactionEndTime - interaction.createdAt) / 1000; // Duration in seconds
-                log('INFO', `Interaction duration: ${interactionDuration.toFixed(2)} seconds`);
-            }
+              try {
+                  // Dynamically handle commands based on the command name
+                  const command = require(`./commands/${commandName}.js`);
+                  await command.execute(interaction);
+                  log('INFO', `Command '${commandName}' executed successfully.`);
+              } catch (error) {
+                  log('ERROR', `Error handling command '${commandName}': ${error.message}`);
+                  log('WARNING', 'There was an error while executing a command.');
+                  await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
+              } finally {
+                  const interactionEndTime = Date.now();
+                  const interactionDuration = (interactionEndTime - interaction.createdAt) / 1000; // Duration in seconds
+                  log('INFO', `Interaction duration: ${interactionDuration.toFixed(2)} seconds`);
+              }
         } else if (interaction.isModalSubmit() && interaction.customId === 'setAboutCommand') {
             // Extract data from modal submission
             const userDescription = interaction.fields.getTextInputValue('descriptionInput');
@@ -113,84 +113,85 @@ client.on('interactionCreate', async (interaction) => {
         } else  if (interaction.isStringSelectMenu() && interaction.customId === 'jobs') {
           // Handle job selection from the first dropdown
 
-                      // Get the selected jobs
-                      const selectedJobs = interaction.values || [];
+                // Get the selected jobs
+                const selectedJobs = interaction.values || [];
 
-                      // Create options for the second dropdown based on the selected jobs
-                      const roleOptions = [];
-                      for (const selectedJob of selectedJobs) {
-                          const jobData = servicesData.services.find(service => service.job === selectedJob);
-                          if (jobData) {
-                              roleOptions.push(
-                                  ...jobData.roles.map(role => new StringSelectMenuOptionBuilder()
-                                      .setLabel(role)
-                                      .setDescription(`Select roles for ${selectedJob}`)
-                                      .setValue(`${selectedJob}-${role}`)
-                                  )
-                              );
-                          }
-                      }
-          
-                      // Create the second dropdown for roles
-                      const selectRoles = new StringSelectMenuBuilder()
-                          .setCustomId('roles')
-                          .setPlaceholder('Choose the roles for selected jobs')
-                          .setMinValues(1)
-                          .setMaxValues(roleOptions.length)
-                          .addOptions(...roleOptions);
-          
-                      // Send the second dropdown to the user
-                      await interaction.reply({
-                          content: 'Choose your Roles',
-                          components: [new ActionRowBuilder().addComponents(selectRoles)],
-                      });
-                  } // Check if the interaction is for the 'roles' select menu
-                  else if (interaction.isStringSelectMenu() && interaction.customId === 'roles') {
-                    // Handle the selected roles
-            const selectedRoles = interaction.values || [];
+                // Create options for the second dropdown based on the selected jobs
+                const roleOptions = [];
+                for (const selectedJob of selectedJobs) {
+                    const jobData = servicesData.services.find(service => service.job === selectedJob);
+                    if (jobData) {
+                        roleOptions.push(
+                            ...jobData.roles.map(role => new StringSelectMenuOptionBuilder()
+                                .setLabel(role)
+                                .setDescription(`Select roles for ${selectedJob}`)
+                                .setValue(`${selectedJob}-${role}`)
+                            )
+                        );
+                    }
+                }
 
-            // Retrieve the selected jobs from the previous interaction
-            const selectedJobsInteraction = await interaction.channel.messages.fetch({ around: interaction.message.id, limit: 1 });
-            const selectedJobsSelectMenu = selectedJobsInteraction.first().components[0].components[0];
-            const selectedJobs = selectedJobsSelectMenu.values || [];
+                // Create the second dropdown for roles
+                const selectRoles = new StringSelectMenuBuilder()
+                    .setCustomId('roles')
+                    .setPlaceholder('Choose the roles for selected jobs')
+                    .setMinValues(1)
+                    .setMaxValues(roleOptions.length)
+                    .addOptions(...roleOptions);
 
-            // Construct a message listing the selected jobs and roles
-            const responseMessage = `Selected jobs: ${selectedJobs.join(', ')}\nSelected roles: ${selectedRoles.join(', ')}`;
+                // Send the second dropdown to the user
+                await interaction.reply({
+                    content: 'Choose your Roles',
+                    components: [new ActionRowBuilder().addComponents(selectRoles)],
+                });
 
-            // Reply to the user with the list of selected jobs and roles
-            await interaction.reply({
-                content: responseMessage,
-                ephemeral: true, // This makes the reply visible only to the user who triggered the interaction
-            });
+        } // Check if the interaction is for the 'roles' select menu
+          else if (interaction.isStringSelectMenu() && interaction.customId === 'roles') {
+            // Handle the selected roles
+          const selectedRoles = interaction.values || [];
 
-            // Save the selected jobs and roles to the user's JSON file
-            const userId = interaction.user.id;
-            const userFilePath = `./users/${userId}.json`;
+          // Retrieve the selected jobs from the previous interaction
+          const selectedJobsInteraction = await interaction.channel.messages.fetch({ around: interaction.message.id, limit: 1 });
+          const selectedJobsSelectMenu = selectedJobsInteraction.first().components[0].components[0];
+          const selectedJobs = selectedJobsSelectMenu.values || [];
 
-            // Read existing user data from the file, or create an empty object if the file doesn't exist
-            let userData = {};
-            try {
-                const existingData = await fs.promises.readFile(userFilePath, 'utf-8');
-                userData = JSON.parse(existingData);
-            } catch (readError) {
-                // File doesn't exist or couldn't be read; proceed with an empty object
-            }
+          // Construct a message listing the selected jobs and roles
+          const responseMessage = `Selected jobs: ${selectedJobs.join(', ')}\nSelected roles: ${selectedRoles.join(', ')}`;
 
-            // Add or update the selected jobs and roles in the user's data
-            userData.selectedJobs = selectedJobs;
-            userData.selectedRoles = selectedRoles;
+          // Reply to the user with the list of selected jobs and roles
+          await interaction.reply({
+              content: responseMessage,
+              ephemeral: true, // This makes the reply visible only to the user who triggered the interaction
+          });
 
-            // Write the updated data back to the user's JSON file
-            await fs.promises.writeFile(userFilePath, JSON.stringify(userData, null, 2));
-            log('INFO', `User data saved to ${userFilePath}`);
+          // Save the selected jobs and roles to the user's JSON file
+          const userId = interaction.user.id;
+          const userFilePath = `./users/${userId}.json`;
+
+          // Read existing user data from the file, or create an empty object if the file doesn't exist
+          let userData = {};
+          try {
+              const existingData = await fs.promises.readFile(userFilePath, 'utf-8');
+              userData = JSON.parse(existingData);
+          } catch (readError) {
+              // File doesn't exist or couldn't be read; proceed with an empty object
+          }
+
+          // Add or update the selected jobs and roles in the user's data
+          userData.selectedJobs = selectedJobs;
+          userData.selectedRoles = selectedRoles;
+
+          // Write the updated data back to the user's JSON file
+          await fs.promises.writeFile(userFilePath, JSON.stringify(userData, null, 2));
+          log('INFO', `User data saved to ${userFilePath}`);
+      }
+        } catch (error) {
+            // Handle any errors or log them as needed
+            console.error(`Error during interaction handling: ${error.message}`);
+            log('ERROR', `Error during interaction handling: ${error.message}`);
+            log('WARNING', 'There was an error during interaction handling.');
+            await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
         }
-    } catch (error) {
-        // Handle any errors or log them as needed
-        console.error(`Error during interaction handling: ${error.message}`);
-        log('ERROR', `Error during interaction handling: ${error.message}`);
-        log('WARNING', 'There was an error during interaction handling.');
-        await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
-    }
 });
 
 client.login(process.env.TOKEN);

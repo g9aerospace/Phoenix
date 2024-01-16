@@ -113,38 +113,56 @@ client.on('interactionCreate', async (interaction) => {
         } else  if (interaction.isSelectMenu() && interaction.customId === 'jobs') {
           // Handle job selection from the first dropdown
 
-          // Get the selected jobs
-          const selectedJobs = interaction.values || [];
+                      // Get the selected jobs
+                      const selectedJobs = interaction.values || [];
 
-          // Create options for the second dropdown based on the selected jobs
-          const roleOptions = [];
-          for (const selectedJob of selectedJobs) {
-              const jobData = servicesData.services.find(service => service.job === selectedJob);
-              if (jobData) {
-                  roleOptions.push(
-                      ...jobData.roles.map(role => new StringSelectMenuOptionBuilder()
-                          .setLabel(role)
-                          .setDescription(`Select roles for ${selectedJob}`)
-                          .setValue(`${selectedJob}-${role}`)
-                      )
-                  );
-              }
-          }
-
-          // Create the second dropdown for roles
-          const selectRoles = new StringSelectMenuBuilder()
-              .setCustomId('roles')
-              .setPlaceholder('Choose the roles for selected jobs')
-              .setMinValues(1)
-              .setMaxValues(roleOptions.length)
-              .addOptions(...roleOptions);
-
-          // Send the second dropdown to the user
-          await interaction.reply({
-              content: 'Choose your Roles',
-              components: [new ActionRowBuilder().addComponents(selectRoles)],
-          });
-      }
+                      // Create options for the second dropdown based on the selected jobs
+                      const roleOptions = [];
+                      for (const selectedJob of selectedJobs) {
+                          const jobData = servicesData.services.find(service => service.job === selectedJob);
+                          if (jobData) {
+                              roleOptions.push(
+                                  ...jobData.roles.map(role => new StringSelectMenuOptionBuilder()
+                                      .setLabel(role)
+                                      .setDescription(`Select roles for ${selectedJob}`)
+                                      .setValue(`${selectedJob}-${role}`)
+                                  )
+                              );
+                          }
+                      }
+          
+                      // Create the second dropdown for roles
+                      const selectRoles = new StringSelectMenuBuilder()
+                          .setCustomId('roles')
+                          .setPlaceholder('Choose the roles for selected jobs')
+                          .setMinValues(1)
+                          .setMaxValues(roleOptions.length)
+                          .addOptions(...roleOptions);
+          
+                      // Send the second dropdown to the user
+                      await interaction.reply({
+                          content: 'Choose your Roles',
+                          components: [new ActionRowBuilder().addComponents(selectRoles)],
+                      });
+                  } // Check if the interaction is for the 'roles' select menu
+                  else if (interaction.isSelectMenu() && interaction.customId === 'roles') {
+                      // Handle the selected roles
+                      const selectedRoles = interaction.values || [];
+          
+                      // Retrieve the selected jobs from the previous interaction
+                      const selectedJobsInteraction = await interaction.channel.messages.fetch({ around: interaction.message.id, limit: 1 });
+                      const selectedJobsSelectMenu = selectedJobsInteraction.first().components[0].components[0];
+                      const selectedJobs = selectedJobsSelectMenu.values || [];
+          
+                      // Construct a message listing the selected jobs and roles
+                      const responseMessage = `Selected jobs: ${selectedJobs.join(', ')}\nSelected roles: ${selectedRoles.join(', ')}`;
+          
+                      // Reply to the user with the list of selected jobs and roles
+                      await interaction.reply({
+                          content: responseMessage,
+                          ephemeral: true, // This makes the reply visible only to the user who triggered the interaction
+                      });
+                  }
     } catch (error) {
         // Handle any errors or log them as needed
         console.error(`Error during interaction handling: ${error.message}`);

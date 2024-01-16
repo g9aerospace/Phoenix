@@ -1,227 +1,212 @@
 const fs = require('fs');
-const path = require('path');
-const { Client, GatewayIntentBits, REST } = require('discord.js');
-const { Routes } = require('discord-api-types/v10');
-const { format } = require('date-fns');
-const axios = require('axios');
-require('dotenv').config();
+const { Client, GatewayIntentBits } = require('discord.js');
+const dotenv = require('dotenv');
+const { log } = require('./assets/logger');
+const servicesData = require('./assets/services.json');
+const { ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, SlashCommandBuilder } = require('discord.js');
 
-const logsFolder = './logs';
-let currentLogFile;
-const botLogQueue = [];
-let isProcessingBotLogQueue = false;
+dotenv.config();
 
-// Webhook URL from .env
-const webhookURL = process.env.WEBHOOK_URL;
-
-// Function to create a new log file with timestamp as the name
-function createLogFile() {
-  const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
-  currentLogFile = path.join(logsFolder, `${timestamp}.log`);
-  fs.writeFileSync(currentLogFile, `Log started at: ${timestamp}\n\n`);
-}
-
-// Function to log messages to the console, current log file, and bot webhook queue
-async function log(message) {
-  const timestamp = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
-  const formattedMessage = `[${timestamp}] ${message}`;
-
-  console.log(formattedMessage);
-  fs.appendFileSync(currentLogFile, `${formattedMessage}\n`);
-
-  // Log to bot webhook queue
-  if (webhookURL) {
-    botLogQueue.push(formattedMessage);
-    if (!isProcessingBotLogQueue) {
-      processBotLogQueue();
-    }
-  }
-}
-
-// Function to process the bot-related log queue and send logs to the webhook
-async function processBotLogQueue() {
-  isProcessingBotLogQueue = true;
-
-  // Wait for a brief period to collect more logs
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  if (botLogQueue.length > 0) {
-    const logs = botLogQueue.join('\n');
-    botLogQueue.length = 0; // Clear the queue
-    try {
-      await axios.post(webhookURL, { content: logs });
-      console.log('Logged to bot webhook successfully.');
-    } catch (webhookError) {
-      handleWebhookError(webhookError, botLogQueue, processBotLogQueue);
-    }
-  }
-
-  isProcessingBotLogQueue = false;
-}
-
-// Handle webhook error and retry mechanism
-function handleWebhookError(webhookError, logQueue, processLogQueue) {
-  if (webhookError.response && webhookError.response.status === 429) {
-    // Retry after a delay (e.g., 5 seconds)
-    console.log('Rate limited. Retrying after 5 seconds...');
-    setTimeout(() => {
-      processLogQueue();
-    }, 5000);
-  } else {
-    console.error(`Error logging to webhook: ${webhookError.message}`);
-  }
-}
-
-// Initialize logs folder if it does not exist
-if (!fs.existsSync(logsFolder)) {
-  fs.mkdirSync(logsFolder);
-}
-
-// Initialize a new log file on startup
-createLogFile();
-
-// Export webhook URL for other modules if needed
-module.exports = {
-  webhookURL,
-};
+log('INFO', 'Bot starting up...');
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-  ],
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+    ],
 });
 
-const commands = [];
-
-client.on('interactionCreate', async (interaction) => {
-  if (interaction.isCommand()) {
-    const { commandName } = interaction;
-
-    try {
-      // Handle each command separately
-      if (commandName === 'ping') {
-        await require('./commands/ping').execute(interaction, log);
-      } else if (commandName === 'hello') {
-        await require('./commands/hello').execute(interaction, log);
-      } else if (commandName === 'help') {
-        await require('./commands/help').execute(interaction, log);
-      } else if (commandName === 'info') {
-        await require('./commands/info').execute(interaction, log);
-      } else if (commandName === 'setinfo') {
-        await require('./commands/setinfo').execute(interaction, log);
-      } else if (commandName === 'finduser') {
-        await require('./commands/finduser').execute(interaction, log);
-      } else if (commandName === 'userinfo') {
-        await require('./commands/userinfo').execute(interaction, log);
-      }
-    } catch (error) {
-      console.error(`Error handling command "${commandName}": ${error}`);
-      await interaction.reply('An error occurred while processing the command.');
-    }
-  } else if (interaction.isStringSelectMenu()) {
-    // Handle select menu interactions
-    const userTag = interaction.user.tag;
-    const customId = interaction.customId;
-    const selectedValue = interaction.values[0];
-
-    // Log the interaction details to the console
-    console.log(`Select menu interaction by ${userTag}. Custom ID: ${customId}. Selected value: ${selectedValue}`);
-
-    // Handle each option separately based on the custom ID
-    switch (customId) {
-      case 'gameDropdown':
-        await handleGameDropdown(interaction, selectedValue);
-        break;
-
-      case 'roleDropdown':
-        await handleRoleDropdown(interaction, selectedValue);
-        break;
-
-      default:
-        // Handle Role selection in setinfo
-        await interaction.reply(`Submitted successfully!`);
-        break;
-    }
-  }
-});
-
-// Function to handle game dropdown selection
-async function handleGameDropdown(interaction, selectedGame) {
-  await interaction.reply({ content: `Ok!`, ephemeral: true });
-}
-
-// Function to handle role dropdown selection
-async function handleRoleDropdown(interaction, selectedRole) {
-  await interaction.reply({ content: `Ok!`, ephemeral: true });
-}
+const startTime = Date.now();
 
 client.once('ready', async () => {
-  try {
-    log(`Logged in as ${client.user.tag}`);
-    
-    // Load slash commands
-    loadCommands();
+    try {
+        const endTime = Date.now();
+        const uptime = (endTime - startTime) / 1000; // Uptime in seconds
+        log('INFO', `Logged in as ${client.user.tag}`);
+        log('INFO', `Bot is now ready. Uptime: ${uptime.toFixed(2)} seconds`);
+        log('INFO', `Bot's ping: ${client.ws.ping}ms`);
 
-    // Refresh slash commands across all guilds
-    await refreshSlashCommands();
-  } catch (error) {
-    log(`Error during startup: ${error}`);
-  }
+        // Set initial activity status
+        setBotActivityStatus();
+
+        // Fetch the global application
+        const application = await client.application.fetch();
+        log('INFO', 'Global application fetched successfully.');
+
+        // Set global commands
+        await application.commands.set([]);
+        log('INFO', 'Global commands set successfully.');
+
+        const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+        for (const file of commandFiles) {
+            const command = require(`./commands/${file}`);
+            await application.commands.create(command.data);
+            log('INFO', `Global slash command loaded/reloaded: ${file}`);
+        }
+
+        // Update activity status every 5 minutes
+        setInterval(() => {
+            setBotActivityStatus();
+            log('INFO', 'Bot activity status updated.');
+        }, 5 * 60 * 1000); // 5 minutes in milliseconds
+    } catch (error) {
+        log('ERROR', `Error during initialization: ${error.message}`);
+        log('WARNING', 'Initialization may not have completed successfully.');
+    }
+});
+
+client.on('interactionCreate', async (interaction) => {
+    try {
+        if (!interaction.isCommand() && !interaction.isModalSubmit() && !interaction.isStringSelectMenu()) {
+            // Handle other types of interactions or catch any unexpected cases
+            // Add your default handling or error response here
+            log('WARNING', `Unhandled interaction type: ${interaction.type}`);
+            await interaction.reply({ content: 'Unhandled interaction type.', ephemeral: true });
+            return;
+        }
+
+          if (interaction.isCommand()) {
+              // Handle command interactions
+              const { commandName } = interaction;
+
+              try {
+                  // Dynamically handle commands based on the command name
+                  const command = require(`./commands/${commandName}.js`);
+                  await command.execute(interaction);
+                  log('INFO', `Command '${commandName}' executed successfully.`);
+              } catch (error) {
+                  log('ERROR', `Error handling command '${commandName}': ${error.message}`);
+                  log('WARNING', 'There was an error while executing a command.');
+                  await interaction.reply({ content: 'There was an error while executing this command.', ephemeral: true });
+              } finally {
+                  const interactionEndTime = Date.now();
+                  const interactionDuration = (interactionEndTime - interaction.createdAt) / 1000; // Duration in seconds
+                  log('INFO', `Interaction duration: ${interactionDuration.toFixed(2)} seconds`);
+              }
+        } else if (interaction.isModalSubmit() && interaction.customId === 'setAboutCommand') {
+            // Extract data from modal submission
+            const userDescription = interaction.fields.getTextInputValue('descriptionInput');
+
+            // Save data to a JSON file named after the user's userId
+            const userId = interaction.user.id;
+            const userData = { userDescription };
+
+            // Specify the file path
+            const filePath = `./users/${userId}.json`;
+
+            try {
+                // Ensure the "users" directory exists, create it if not
+                await fs.promises.mkdir('./users', { recursive: true });
+
+                // Write the data to the JSON file
+                await fs.promises.writeFile(filePath, JSON.stringify(userData, null, 2));
+                log('INFO', `User description saved to ${filePath}`);
+
+                // Reply to the user
+                await interaction.reply({ content: 'User description set successfully!', ephemeral: true });
+            } catch (error) {
+                console.error(`Error saving user description for user ${userId}:`, error);
+                log('ERROR', `Error saving user description for user ${userId}: ${error.message}`);
+                await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
+            }
+        } else  if (interaction.isStringSelectMenu() && interaction.customId === 'jobs') {
+          // Handle job selection from the first dropdown
+
+                // Get the selected jobs
+                const selectedJobs = interaction.values || [];
+
+                // Create options for the second dropdown based on the selected jobs
+                const roleOptions = [];
+                for (const selectedJob of selectedJobs) {
+                    const jobData = servicesData.services.find(service => service.job === selectedJob);
+                    if (jobData) {
+                        roleOptions.push(
+                            ...jobData.roles.map(role => new StringSelectMenuOptionBuilder()
+                                .setLabel(role)
+                                .setDescription(`Select roles for ${selectedJob}`)
+                                .setValue(`${selectedJob}-${role}`)
+                            )
+                        );
+                    }
+                }
+
+                // Create the second dropdown for roles
+                const selectRoles = new StringSelectMenuBuilder()
+                    .setCustomId('roles')
+                    .setPlaceholder('Choose the roles for selected jobs')
+                    .setMinValues(1)
+                    .setMaxValues(roleOptions.length)
+                    .addOptions(...roleOptions);
+
+                // Send the second dropdown to the user
+                await interaction.reply({
+                    content: 'Choose your Roles',
+                    components: [new ActionRowBuilder().addComponents(selectRoles)],
+                });
+
+        } // Check if the interaction is for the 'roles' select menu
+          else if (interaction.isStringSelectMenu() && interaction.customId === 'roles') {
+            // Handle the selected roles
+          const selectedRoles = interaction.values || [];
+
+          // Retrieve the selected jobs from the previous interaction
+          const selectedJobsInteraction = await interaction.channel.messages.fetch({ around: interaction.message.id, limit: 1 });
+          const selectedJobsSelectMenu = selectedJobsInteraction.first().components[0].components[0];
+          const selectedJobs = selectedJobsSelectMenu.values || [];
+
+          // Construct a message listing the selected jobs and roles
+          const responseMessage = `Selected jobs: ${selectedJobs.join(', ')}\nSelected roles: ${selectedRoles.join(', ')}`;
+
+          // Reply to the user with the list of selected jobs and roles
+          await interaction.reply({
+              content: responseMessage,
+              ephemeral: true, // This makes the reply visible only to the user who triggered the interaction
+          });
+
+          // Save the selected jobs and roles to the user's JSON file
+          const userId = interaction.user.id;
+          const userFilePath = `./users/${userId}.json`;
+
+          // Read existing user data from the file, or create an empty object if the file doesn't exist
+          let userData = {};
+          try {
+              const existingData = await fs.promises.readFile(userFilePath, 'utf-8');
+              userData = JSON.parse(existingData);
+          } catch (readError) {
+              // File doesn't exist or couldn't be read; proceed with an empty object
+          }
+
+          // Add or update the selected jobs and roles in the user's data
+          userData.selectedJobs = selectedJobs;
+          userData.selectedRoles = selectedRoles;
+
+          // Write the updated data back to the user's JSON file
+          await fs.promises.writeFile(userFilePath, JSON.stringify(userData, null, 2));
+          log('INFO', `User data saved to ${userFilePath}`);
+      }
+        } catch (error) {
+            // Handle any errors or log them as needed
+            console.error(`Error during interaction handling: ${error.message}`);
+            log('ERROR', `Error during interaction handling: ${error.message}`);
+            log('WARNING', 'There was an error during interaction handling.');
+            await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
+        }
 });
 
 client.login(process.env.TOKEN);
+log('INFO', 'Bot login initiated.');
 
-async function loadCommands() {
-  try {
-    // Check if the commands folder exists
-    const commandsFolder = './commands';
-    if (!fs.existsSync(commandsFolder)) {
-      throw new Error('Commands folder not found.');
-    }
+function setBotActivityStatus() {
+    const activities = [
+        { name: 'with Discord.js', type: 'PLAYING' },
+        { name: 'with commands', type: 'PLAYING' },
+        { name: 'with logs', type: 'WATCHING' },
+        { name: 'for interactions', type: 'LISTENING' },
+    ];
 
-    // Read each file in the commands folder and load the commands
-    const commandFiles = fs.readdirSync(commandsFolder).filter(file => file.endsWith('.js'));
+    const activity = activities[Math.floor(Math.random() * activities.length)];
 
-    for (const file of commandFiles) {
-      try {
-        const command = require(`./commands/${file}`);
-        if (typeof command.setup === 'function') {
-          command.setup(client, log);
-          log(`Command ${file} loaded successfully.`);
-        } else {
-          log(`Invalid command structure in ${file}.`);
-        }
-
-        // Collect command data for global update
-        commands.push(command.data);
-      } catch (error) {
-        log(`Error loading command from ${file}: ${error}`);
-      }
-    }
-  } catch (error) {
-    log(`Error during command loading: ${error}`);
-  }
-}
-
-async function refreshSlashCommands() {
-  const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
-
-  try {
-    log('Started refreshing global (/) commands.');
-
-    // Fetch application (bot) information
-    const application = await client.application?.fetch();
-    
-    // Update global slash commands
-    await rest.put(
-      Routes.applicationCommands(application.id),
-      { body: commands },
-    );
-
-    log('Successfully reloaded global (/) commands.');
-  } catch (error) {
-    log(`Error refreshing global (/) commands: ${error}`);
-  }
+    client.user.setActivity(activity.name, { type: activity.type });
+    log('INFO', `Bot activity status updated: ${activity.type} ${activity.name}`);
 }

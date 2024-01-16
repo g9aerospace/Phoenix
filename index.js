@@ -58,7 +58,7 @@ client.once('ready', async () => {
 
 client.on('interactionCreate', async (interaction) => {
     try {
-        if (!interaction.isCommand() && !interaction.isModalSubmit() && !interaction.isSelectMenu()) {
+        if (!interaction.isCommand() && !interaction.isModalSubmit() && !interaction.isStringSelectMenu()) {
             // Handle other types of interactions or catch any unexpected cases
             // Add your default handling or error response here
             log('WARNING', `Unhandled interaction type: ${interaction.type}`);
@@ -110,7 +110,7 @@ client.on('interactionCreate', async (interaction) => {
                 log('ERROR', `Error saving user description for user ${userId}: ${error.message}`);
                 await interaction.reply({ content: 'There was an error while processing your request.', ephemeral: true });
             }
-        } else  if (interaction.isSelectMenu() && interaction.customId === 'jobs') {
+        } else  if (interaction.isStringSelectMenu() && interaction.customId === 'jobs') {
           // Handle job selection from the first dropdown
 
                       // Get the selected jobs
@@ -145,7 +145,7 @@ client.on('interactionCreate', async (interaction) => {
                           components: [new ActionRowBuilder().addComponents(selectRoles)],
                       });
                   } // Check if the interaction is for the 'roles' select menu
-                  else if (interaction.isSelectMenu() && interaction.customId === 'roles') {
+                  else if (interaction.isStringSelectMenu() && interaction.customId === 'roles') {
                     // Handle the selected roles
             const selectedRoles = interaction.values || [];
 

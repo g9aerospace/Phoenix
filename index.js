@@ -146,23 +146,44 @@ client.on('interactionCreate', async (interaction) => {
                       });
                   } // Check if the interaction is for the 'roles' select menu
                   else if (interaction.isSelectMenu() && interaction.customId === 'roles') {
-                      // Handle the selected roles
-                      const selectedRoles = interaction.values || [];
-          
-                      // Retrieve the selected jobs from the previous interaction
-                      const selectedJobsInteraction = await interaction.channel.messages.fetch({ around: interaction.message.id, limit: 1 });
-                      const selectedJobsSelectMenu = selectedJobsInteraction.first().components[0].components[0];
-                      const selectedJobs = selectedJobsSelectMenu.values || [];
-          
-                      // Construct a message listing the selected jobs and roles
-                      const responseMessage = `Selected jobs: ${selectedJobs.join(', ')}\nSelected roles: ${selectedRoles.join(', ')}`;
-          
-                      // Reply to the user with the list of selected jobs and roles
-                      await interaction.reply({
-                          content: responseMessage,
-                          ephemeral: true, // This makes the reply visible only to the user who triggered the interaction
-                      });
-                  }
+                    // Handle the selected roles
+            const selectedRoles = interaction.values || [];
+
+            // Retrieve the selected jobs from the previous interaction
+            const selectedJobsInteraction = await interaction.channel.messages.fetch({ around: interaction.message.id, limit: 1 });
+            const selectedJobsSelectMenu = selectedJobsInteraction.first().components[0].components[0];
+            const selectedJobs = selectedJobsSelectMenu.values || [];
+
+            // Construct a message listing the selected jobs and roles
+            const responseMessage = `Selected jobs: ${selectedJobs.join(', ')}\nSelected roles: ${selectedRoles.join(', ')}`;
+
+            // Reply to the user with the list of selected jobs and roles
+            await interaction.reply({
+                content: responseMessage,
+                ephemeral: true, // This makes the reply visible only to the user who triggered the interaction
+            });
+
+            // Save the selected jobs and roles to the user's JSON file
+            const userId = interaction.user.id;
+            const userFilePath = `./users/${userId}.json`;
+
+            // Read existing user data from the file, or create an empty object if the file doesn't exist
+            let userData = {};
+            try {
+                const existingData = await fs.promises.readFile(userFilePath, 'utf-8');
+                userData = JSON.parse(existingData);
+            } catch (readError) {
+                // File doesn't exist or couldn't be read; proceed with an empty object
+            }
+
+            // Add or update the selected jobs and roles in the user's data
+            userData.selectedJobs = selectedJobs;
+            userData.selectedRoles = selectedRoles;
+
+            // Write the updated data back to the user's JSON file
+            await fs.promises.writeFile(userFilePath, JSON.stringify(userData, null, 2));
+            log('INFO', `User data saved to ${userFilePath}`);
+        }
     } catch (error) {
         // Handle any errors or log them as needed
         console.error(`Error during interaction handling: ${error.message}`);

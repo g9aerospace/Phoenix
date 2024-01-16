@@ -1,8 +1,8 @@
 {
-  "games": [
+  "services": [
     {
-      "name": "Minecraft",
-      "questions": [
+      "job": "Minecraft",
+      "roles": [
         "Plugin Developer",
         "Mod Developer",
         "Map Builder",
@@ -10,15 +10,15 @@
       ]
     },
     {
-      "name": "CS2",
-      "questions": [
+      "job": "CS2",
+      "roles": [
         "Developer",
         "Map Builder"
       ]
     },
     {
-      "name": "Discord Bot",
-      "questions": [
+      "job": "Discord Bot",
+      "roles": [
         "Developer",
         "Documentation",
         "Support Representative",
@@ -26,32 +26,32 @@
       ]
     },
     {
-      "name": "Discord Guild Staff",
-      "questions": [
+      "job": "Discord Guild Staff",
+      "roles": [
         "Asset Artist",
         "Support Representative",
         "Moderator"
       ]
     },
     {
-      "name": "Video Creator",
-      "questions": [
+      "job": "Video Creator",
+      "roles": [
         "Cinematic Editing",
-        "Advertisment",
+        "Advertisement",
         "Modern Editing"
       ]
     },
     {
-      "name": "Digital Artist",
-      "questions": [
+      "job": "Digital Artist",
+      "roles": [
         "Image Manipulation",
         "Artist",
         "UI Designer"
       ]
     },
     {
-        "name": "Game Designer",
-        "questions": [
+        "job": "Game Designer",
+        "roles": [
             "Gameplay Designer",
             "Level Designer",
             "Narrative Designer",
@@ -63,8 +63,8 @@
         ]
     },
     {
-        "name": "Website",
-        "questions": [
+        "job": "Website",
+        "roles": [
             "Web Developer",
             "Front-end Developer",
             "Back-end Developer",
@@ -75,5 +75,5 @@
             "Web Administrator"
         ]
     }
-]
+  ]
 }

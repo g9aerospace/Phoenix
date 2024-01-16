@@ -1,4 +1,5 @@
 const { ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, SlashCommandBuilder } = require('discord.js');
+const servicesData = require('../assets/services.json'); // Assuming the services.json file is in the parent directory
 
 module.exports = {
     data: {
@@ -6,25 +7,19 @@ module.exports = {
         description: 'Select the jobs which apply to you',
     },
     async execute(interaction) {
+        const jobOptions = servicesData.services.map(service => {
+            return new StringSelectMenuOptionBuilder()
+                .setLabel(service.job)
+                .setDescription(`Roles available for ${service.job}`)
+                .setValue(service.job);
+        });
+
         const select = new StringSelectMenuBuilder()
             .setCustomId('jobs')
             .setPlaceholder('Choose the jobs that apply to you')
-            .setMinValues(1)  // Minimum number of selected options (set to 1 to allow at least one selection)
-            .setMaxValues(3)  // Maximum number of selected options (set to the number of options to allow selecting all)
-            .addOptions(
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Bulbasaur')
-                    .setDescription('The dual-type Grass/Poison Seed Pokémon.')
-                    .setValue('bulbasaur'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Charmander')
-                    .setDescription('The Fire-type Lizard Pokémon.')
-                    .setValue('charmander'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Squirtle')
-                    .setDescription('The Water-type Tiny Turtle Pokémon.')
-                    .setValue('squirtle'),
-            );
+            .setMinValues(1) // Minimum number of selected options
+            .setMaxValues(jobOptions.length) // Maximum number of selected options (equal to the number of jobs)
+            .addOptions(...jobOptions);
 
         const row = new ActionRowBuilder()
             .addComponents(select);
